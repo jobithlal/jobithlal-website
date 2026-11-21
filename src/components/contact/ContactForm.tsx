@@ -1,7 +1,6 @@
 "use client";
 
 import { startTransition, useActionState, useEffect, useId, useRef, useSyncExternalStore } from "react";
-import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 import { CheckCircle2, Loader2, Mail, MessageCircle, AlertTriangle } from "lucide-react";
 import { submitInquiry } from "@/app/actions/contact";
@@ -23,7 +22,6 @@ function newKey() {
 
 export function ContactForm() {
   const [state, action, pending] = useActionState(submitInquiry, initial);
-  const pathname = usePathname();
   const formRef = useRef<HTMLFormElement>(null);
   const statusRef = useRef<HTMLDivElement>(null);
   const startedAt = useRef(0);
@@ -68,11 +66,11 @@ export function ContactForm() {
         if (pending) return;
         const fd = new FormData(e.currentTarget);
         fd.set("startedAt", String(startedAt.current));
+        fd.set("sourcePage", window.location.pathname);
         fd.set("submissionKey", submissionKey.current);
         startTransition(() => action(fd));
       }}
       noValidate className="space-y-5" aria-describedby="form-status">
-      <input type="hidden" name="sourcePage" value={pathname} />
       {/* Honeypot — hidden from people and assistive tech */}
       <div aria-hidden className="absolute left-[-10000px] top-auto h-px w-px overflow-hidden">
         <label>

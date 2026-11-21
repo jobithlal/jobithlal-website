@@ -3,17 +3,40 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { LayoutDashboard, LogOut, Menu, X, ExternalLink } from "lucide-react";
+import { LayoutDashboard, LogOut, Menu, X, ExternalLink, FileText, Sparkles, FolderOpen, Image as ImageIcon, Inbox, Settings, Users, ScrollText } from "lucide-react";
+import { Toaster } from "./kit";
 import { logout } from "@/app/admin/actions/auth";
 import { cn } from "@/lib/utils";
 
 /**
- * Admin frame: collapsible sidebar (drawer on mobile) + top bar.
- * Only modules that actually work are listed — the rest arrive in Phase 6–7.
+ * Admin frame: sidebar (drawer on mobile) + top bar. The server decides which
+ * modules this user may see; every page and action re-checks on the server.
  */
-const NAV = [{ href: "/admin", label: "Overview", icon: LayoutDashboard }];
+export type NavKey = "overview" | "content" | "services" | "portfolio" | "media" | "inquiries" | "settings" | "users" | "audit";
+const ALL_NAV: { key: NavKey; href: string; label: string; icon: typeof Inbox }[] = [
+  { key: "overview", href: "/admin", label: "Overview", icon: LayoutDashboard },
+  { key: "content", href: "/admin/content", label: "Website content", icon: FileText },
+  { key: "services", href: "/admin/services", label: "Services", icon: Sparkles },
+  { key: "portfolio", href: "/admin/portfolio", label: "Portfolio", icon: FolderOpen },
+  { key: "media", href: "/admin/media", label: "Media library", icon: ImageIcon },
+  { key: "inquiries", href: "/admin/inquiries", label: "Inquiries", icon: Inbox },
+  { key: "settings", href: "/admin/settings", label: "Settings", icon: Settings },
+  { key: "users", href: "/admin/users", label: "Users & security", icon: Users },
+  { key: "audit", href: "/admin/audit", label: "Activity log", icon: ScrollText },
+];
 
-export function AdminShell({ user, children }: { user: { name: string; email: string; roleLabel: string }; children: React.ReactNode }) {
+export function AdminShell({
+  user,
+  nav,
+  unread = 0,
+  children,
+}: {
+  user: { name: string; email: string; roleLabel: string };
+  nav: NavKey[];
+  unread?: number;
+  children: React.ReactNode;
+}) {
+  const NAV = ALL_NAV.filter((n) => nav.includes(n.key));
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [prev, setPrev] = useState(pathname);
@@ -23,12 +46,12 @@ export function AdminShell({ user, children }: { user: { name: string; email: st
   }
 
   const sidebar = (
-    <nav aria-label="Admin" className="flex h-full flex-col gap-1 p-4">
+    <nav aria-label="Admin" className="flex h-full flex-col gap-1 overflow-y-auto p-4">
       <Link href="/admin" className="mb-6 px-3 font-display text-xl font-bold">
         <span className="text-accent">/</span>JOBITHLAL
       </Link>
-      {NAV.map(({ href, label, icon: Icon }) => {
-        const active = pathname === href;
+      {NAV.map(({ key, href, label, icon: Icon }) => {
+        const active = href === "/admin" ? pathname === href : pathname.startsWith(href);
         return (
           <Link
             key={href}
@@ -40,13 +63,15 @@ export function AdminShell({ user, children }: { user: { name: string; email: st
             )}
           >
             <Icon className="size-4" aria-hidden />
-            {label}
+            <span className="flex-1">{label}</span>
+            {key === "inquiries" && unread > 0 && (
+              <span className={cn("rounded-full px-2 py-0.5 text-xs font-bold", active ? "bg-ink text-accent" : "bg-accent text-ink")} aria-label={`${unread} unread`}>
+                {unread}
+              </span>
+            )}
           </Link>
         );
       })}
-      <p className="mt-4 px-3 text-xs leading-relaxed text-muted">
-        Content, portfolio, media, inquiries and settings managers are being built next.
-      </p>
       <div className="mt-auto space-y-1 border-t border-line pt-4">
         <a href="/" target="_blank" rel="noopener" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-fg-2 hover:bg-elevated hover:text-fg">
           <ExternalLink className="size-4" aria-hidden /> View website
@@ -61,6 +86,7 @@ export function AdminShell({ user, children }: { user: { name: string; email: st
   );
 
   return (
+    <Toaster>
     <div className="flex min-h-svh">
       <aside className="sticky top-0 hidden h-svh w-64 shrink-0 border-r border-line bg-bg-2 lg:block">{sidebar}</aside>
       {open && (
@@ -79,17 +105,18 @@ export function AdminShell({ user, children }: { user: { name: string; email: st
           >
             {open ? <X className="size-4" /> : <Menu className="size-4" />}
           </button>
-          <div className="ml-auto text-right">
+          <Link href="/admin/account" className="ml-auto rounded-lg px-2 py-1 text-right hover:bg-elevated" aria-label="My account">
             <p className="text-sm font-medium">{user.name}</p>
             <p className="text-xs text-muted">
               {user.roleLabel} · {user.email}
             </p>
-          </div>
+          </Link>
         </header>
         <main id="admin-main" className="flex-1 p-4 sm:p-6 lg:p-8">
-          {children}
+          <div className="mx-auto max-w-6xl">{children}</div>
         </main>
       </div>
     </div>
+    </Toaster>
   );
 }

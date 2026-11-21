@@ -12,22 +12,29 @@ import { cn } from "@/lib/utils";
 
 type ServiceLink = { slug: string; title: string; subtitle: string };
 
-export function Header({
-  logo,
-  services,
-  behavior = "auto-hide",
-}: {
+type HeaderProps = {
   logo: { text: string; subtitle: string; imageUrl?: string };
   services: ServiceLink[];
   behavior?: "auto-hide" | "sticky";
-}) {
-  const pathname = usePathname();
+};
+
+/** Reads the URL, so it must render inside <Suspense> (see SiteChrome). */
+export function Header(props: HeaderProps) {
+  return <HeaderShell {...props} pathname={usePathname()} />;
+}
+
+/**
+ * The header itself. `pathname` is passed in so a static copy (without the
+ * active-page underline) can be prerendered as the Suspense fallback.
+ */
+export function HeaderShell({ logo, services, behavior = "auto-hide", pathname }: HeaderProps & { pathname: string | null }) {
   const { scrollY } = useScroll();
   const [scrolled, setScrolled] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [open, setOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("top");
   const isHome = pathname === "/";
+  const path = pathname ?? "";
 
   useMotionValueEvent(scrollY, "change", (y) => {
     const prev = scrollY.getPrevious() ?? 0;
@@ -51,16 +58,16 @@ export function Header({
   }, [isHome]);
 
   // Close the mobile menu after navigation (state-from-props pattern, no effect needed).
-  const [prevPath, setPrevPath] = useState(pathname);
-  if (pathname !== prevPath) {
-    setPrevPath(pathname);
+  const [prevPath, setPrevPath] = useState(path);
+  if (path !== prevPath) {
+    setPrevPath(path);
     setOpen(false);
   }
 
   const isActive = (n: (typeof mainNav)[number]) => {
     if (isHome) return n.section === activeSection;
     if (!n.match || n.match === "/") return false;
-    return pathname.startsWith(n.match);
+    return path.startsWith(n.match);
   };
 
   return (

@@ -8,8 +8,8 @@ Next.js 16 (App Router, Cache Components) · TypeScript · Tailwind CSS 4 · Mot
 |---|---|---|
 | 1–4 | Public website: homepage, 3 service pages, work + case studies, about, contact, legal, SEO | ✅ Done |
 | 5 | Database schema + migrations + seed, admin authentication, roles, audit log, inquiry storage | ✅ Done |
-| 6 | Admin dashboard modules: content editor, portfolio, media library, inquiries, settings, users | ⏳ Next |
-| 7 | Appearance manager, SEO manager, analytics, backup/restore | ⏳ |
+| 6 | Admin: homepage editor (draft/preview/publish/history), services, portfolio, media library, inquiries (notes, CSV), settings, users & 2FA, activity log | ✅ Done |
+| 7 | Appearance manager, SEO manager, analytics, backup/restore | ⏳ Next |
 | 8–10 | Polish, Playwright test suite, deployment | ⏳ |
 
 ## Quick start (Mac)
@@ -53,6 +53,17 @@ Public pages read content only through `src/lib/content.ts`:
   disappear automatically as soon as one real project is published.
 - **Statistics** only render when marked verified. **Social links** stay hidden until real URLs are entered.
 
+## Media storage (Vercel Blob)
+
+Uploads go straight from the browser to **Vercel Blob** using short-lived, single-file tokens issued by
+`/admin/media/upload` (the storage credential never reaches the browser). After upload the server checks
+the file's real bytes (magic numbers) and size before registering it; anything else is deleted.
+Allowed: JPG, PNG, WebP, AVIF, GIF (20 MB) and MP4, WebM, MOV (500 MB, multipart). SVG is refused.
+Files in use can't be deleted — the library shows where each file is used.
+
+**Setup:** Vercel → project → Storage → Create Database → **Blob** → connect to the project → redeploy.
+Vercel adds `BLOB_READ_WRITE_TOKEN` automatically. Until then the admin shows a clear setup notice.
+
 ## Security model
 
 - **Passwords:** scrypt (Node built-in), 12+ characters. **Sessions:** random 256-bit token in an
@@ -93,7 +104,7 @@ and generate a fresh migration.
 
 ## Known limitations
 
-- Admin modules for editing content, portfolio, media, inquiries and settings are Phase 6 — the overview
-  shows live counts and setup status today.
+- Design & appearance, SEO manager, analytics and backup/restore are Phase 7.
+- Services save straight to the live site (no separate draft step); the homepage and projects have full draft → preview → publish.
 - The design was built from the written brief; the visual reference image wasn't available.
 - Legal pages are starting templates — have them reviewed before launch.

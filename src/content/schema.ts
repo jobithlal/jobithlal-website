@@ -8,9 +8,12 @@ import { z } from "zod";
  * validate rows loaded from PostgreSQL, so the public components never change.
  */
 
+/** Required, non-blank text (whitespace-only is rejected). */
+const req = (max = 500) => z.string().trim().min(1, "This can't be empty.").max(max);
+
 export const ctaSchema = z.object({
-  label: z.string().min(1).max(60),
-  href: z.string().min(1).max(300),
+  label: req(60),
+  href: req(300).refine((v) => /^(\/|#|https:\/\/|mailto:|tel:)/.test(v), "Use a path like /contact, an https:// link, mailto: or tel:."),
 });
 export type Cta = z.infer<typeof ctaSchema>;
 
@@ -50,11 +53,11 @@ export const siteSettingsSchema = z.object({
 export type SiteSettings = z.infer<typeof siteSettingsSchema>;
 
 export const heroSchema = z.object({
-  eyebrow: z.string(),
-  lines: z.array(z.string()).min(1).max(4),
+  eyebrow: req(120),
+  lines: z.array(req(80)).min(1, "Add at least one headline line.").max(4),
   /** Index of the line rendered in the accent colour. */
   accentLine: z.number().int().min(0),
-  description: z.string(),
+  description: req(600),
   primaryCta: ctaSchema,
   secondaryCta: ctaSchema,
   media: mediaSchema,
@@ -68,7 +71,7 @@ export type HeroContent = z.infer<typeof heroSchema>;
 
 export const tickerSchema = z.object({
   enabled: z.boolean(),
-  items: z.array(z.string()).min(1),
+  items: z.array(req(60)).min(1, "Add at least one item."),
   /** Seconds for one full loop. */
   durationSeconds: z.number().min(5).max(120),
   direction: z.enum(["left", "right"]),
@@ -89,23 +92,23 @@ export const serviceSchema = z.object({
   slug: serviceSlugSchema,
   enabled: z.boolean(),
   order: z.number().int(),
-  title: z.string(),
-  shortTitle: z.string(),
-  subtitle: z.string(),
-  description: z.string(),
+  title: req(80),
+  shortTitle: req(60),
+  subtitle: req(120),
+  description: req(600),
   icon: z.enum(["clapperboard", "sparkles", "code"]),
   media: mediaSchema,
   page: z.object({
-    eyebrow: z.string(),
-    headline: z.string(),
-    accent: z.string(),
-    subheading: z.string(),
-    intro: z.string(),
+    eyebrow: req(80),
+    headline: req(160),
+    accent: z.string().trim().max(80),
+    subheading: req(400),
+    intro: req(1500),
     features: z.array(z.object({ title: z.string(), text: z.string() })),
     process: z.array(z.object({ title: z.string(), text: z.string() })),
     faqs: z.array(faqSchema),
   }),
-  seo: z.object({ title: z.string(), description: z.string() }),
+  seo: z.object({ title: req(70), description: req(170) }),
   cta: ctaSchema,
 });
 export type Service = z.infer<typeof serviceSchema>;
@@ -141,15 +144,15 @@ export const projectSchema = z.object({
 export type Project = z.infer<typeof projectSchema>;
 
 export const processStepSchema = z.object({
-  title: z.string(),
-  text: z.string(),
+  title: req(80),
+  text: req(400),
   icon: z.enum(["message", "target", "zap", "send"]),
 });
 export type ProcessStep = z.infer<typeof processStepSchema>;
 
 export const valuePropSchema = z.object({
-  title: z.string(),
-  text: z.string(),
+  title: req(80),
+  text: req(400),
   icon: z.enum(["target", "layers", "cpu", "zap"]),
 });
 
@@ -161,24 +164,24 @@ export const statSchema = z.object({
 });
 
 export const homeSchema = z.object({
-  services: z.object({ eyebrow: z.string(), heading: z.string(), description: z.string() }),
+  services: z.object({ eyebrow: req(80), heading: req(160), description: req(600) }),
   difference: z.object({
-    eyebrow: z.string(),
-    headingLines: z.array(z.string()),
-    accent: z.string(),
-    body: z.string(),
+    eyebrow: req(80),
+    headingLines: z.array(req(80)).min(1, "Add at least one heading line."),
+    accent: z.string().trim().max(80),
+    body: req(1200),
     portrait: mediaSchema,
     values: z.array(valuePropSchema).length(4),
     stats: z.array(statSchema),
   }),
-  work: z.object({ eyebrow: z.string(), heading: z.string(), description: z.string() }),
-  process: z.object({ eyebrow: z.string(), heading: z.string(), steps: z.array(processStepSchema) }),
+  work: z.object({ eyebrow: req(80), heading: req(160), description: req(600) }),
+  process: z.object({ eyebrow: req(80), heading: req(160), steps: z.array(processStepSchema).min(1).max(8) }),
   finalCta: z.object({
-    heading: z.string(),
-    lead: z.string(),
-    body: z.string(),
+    heading: req(120),
+    lead: req(300),
+    body: req(1200),
     cta: ctaSchema,
   }),
-  contact: z.object({ heading: z.string(), accent: z.string(), description: z.string() }),
+  contact: z.object({ heading: req(120), accent: z.string().trim().max(80), description: req(600) }),
 });
 export type HomeContent = z.infer<typeof homeSchema>;

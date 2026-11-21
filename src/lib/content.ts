@@ -1,6 +1,7 @@
 import "server-only";
 import { cacheLife, cacheTag } from "next/cache";
 import { db } from "@/lib/db";
+import type { Prisma } from "@/generated/prisma/client";
 import { siteSettings as seedSite, hero as seedHero, ticker as seedTicker, home as seedHome } from "@/content/site";
 import { services as seedServices } from "@/content/services";
 import { projects as seedProjects } from "@/content/projects";
@@ -84,41 +85,54 @@ export async function getSiteSettings(): Promise<SiteSettings> {
 
 // ─────────────────────────── Homepage ───────────────────────────
 
-type HomeBundle = {
+export type HomeBundle = {
   hero: typeof seedHero;
   ticker: typeof seedTicker;
   home: HomeContent;
   visible: Record<string, boolean>;
+  order: string[];
 };
 
 async function getHomeBundle(): Promise<HomeBundle> {
   "use cache";
   cacheTag(TAGS.home);
   cacheLife("max");
-  const seed: HomeBundle = { hero: seedHero, ticker: seedTicker, home: seedHome, visible: {} };
+  const seed: HomeBundle = { hero: seedHero, ticker: seedTicker, home: seedHome, visible: {}, order: [] };
   return fromDb(
     "home",
     async () => {
       const page = await db!.page.findUnique({ where: { slug: "home" }, include: { sections: { orderBy: { order: "asc" } } } });
       if (!page) return null;
-      const by = Object.fromEntries(page.sections.map((s) => [s.key, s.publishedData]));
-      const visible = Object.fromEntries(page.sections.map((s) => [s.key, s.visible]));
-      return {
-        hero: heroSchema.parse(by.hero ?? seedHero),
-        ticker: tickerSchema.parse(by.ticker ?? seedTicker),
-        home: homeSchema.parse({
-          services: by.services ?? seedHome.services,
-          difference: by.difference ?? seedHome.difference,
-          work: by.work ?? seedHome.work,
-          process: by.process ?? seedHome.process,
-          finalCta: by.finalCta ?? seedHome.finalCta,
-          contact: by.contact ?? seedHome.contact,
-        }),
-        visible,
-      };
+      return buildHomeBundle(page.sections.map((s) => ({ key: s.key, data: s.publishedData, visible: s.visible })));
     },
     seed,
   );
+}
+
+/**
+ * Validates section JSON into the homepage shape. Invalid or missing sections
+ * fall back to seed content instead of breaking the page.
+ */
+export function buildHomeBundle(sections: { key: string; data: unknown; visible: boolean }[]): HomeBundle {
+  const by = Object.fromEntries(sections.map((s) => [s.key, s.data]));
+  const pick = <T,>(schema: { safeParse: (v: unknown) => { success: boolean; data?: T } }, v: unknown, fallback: T): T => {
+    const r = schema.safeParse(v);
+    return r.success ? (r.data as T) : fallback;
+  };
+  return {
+    hero: pick(heroSchema, by.hero, seedHero),
+    ticker: pick(tickerSchema, by.ticker, seedTicker),
+    home: {
+      services: pick(homeSchema.shape.services, by.services, seedHome.services),
+      difference: pick(homeSchema.shape.difference, by.difference, seedHome.difference),
+      work: pick(homeSchema.shape.work, by.work, seedHome.work),
+      process: pick(homeSchema.shape.process, by.process, seedHome.process),
+      finalCta: pick(homeSchema.shape.finalCta, by.finalCta, seedHome.finalCta),
+      contact: pick(homeSchema.shape.contact, by.contact, seedHome.contact),
+    },
+    visible: Object.fromEntries(sections.map((s) => [s.key, s.visible])),
+    order: sections.map((s) => s.key),
+  };
 }
 
 export async function getHero() {
@@ -130,9 +144,10 @@ export async function getTicker() {
 export async function getHome() {
   return (await getHomeBundle()).home;
 }
-/** Section visibility set in the admin (missing = visible). */
-export async function getHomeVisibility() {
-  return (await getHomeBundle()).visible;
+/** Section visibility and order set in the admin (missing = visible, default order). */
+export async function getHomeLayout() {
+  const b = await getHomeBundle();
+  return { visible: b.visible, order: b.order };
 }
 
 // ─────────────────────────── Services ───────────────────────────
@@ -178,6 +193,45 @@ export async function getService(slug: string) {
 
 // ─────────────────────────── Projects ───────────────────────────
 
+export const projectInclude = {
+  category: true,
+  cover: true,
+  mobileCover: true,
+  video: true,
+  gallery: { orderBy: { order: "asc" as const }, include: { asset: true } },
+} satisfies Prisma.ProjectInclude;
+
+type ProjectRow = Prisma.ProjectGetPayload<{ include: typeof projectInclude }>;
+
+/** Database row → validated public Project shape (also used by the admin preview). */
+export function toProject(p: ProjectRow): Project {
+  return projectSchema.parse({
+    slug: p.slug,
+    title: p.title,
+    category: p.category.slug,
+    client: p.client ?? undefined,
+    hideClient: p.hideClient,
+    year: p.projectDate?.getFullYear(),
+    summary: p.summary,
+    overview: p.overview,
+    challenge: p.challenge ?? undefined,
+    approach: p.approach ?? undefined,
+    deliverables: Array.isArray(p.deliverables) ? p.deliverables : [],
+    outcome: p.outcome ?? undefined,
+    outcomeVerified: p.outcomeVerified,
+    cover: media({ image: p.cover, mobileImage: p.mobileCover, video: p.video, focal: p.focal, alt: p.title }),
+    externalVideoUrl: p.externalVideoUrl ?? undefined,
+    gallery: p.gallery.map((g) =>
+      g.asset.type === "VIDEO" ? media({ video: g.asset, alt: g.caption ?? "" }) : media({ image: g.asset, alt: g.caption ?? g.asset.alt }),
+    ),
+    featured: p.featured,
+    order: p.order,
+    status: p.status === "PUBLISHED" ? "published" : "draft",
+    isDemo: p.isDemo,
+    seo: { title: p.seoTitle ?? undefined, description: p.seoDescription ?? undefined },
+  });
+}
+
 async function getAllPublishedProjects(): Promise<Project[]> {
   "use cache";
   cacheTag(TAGS.projects);
@@ -188,43 +242,9 @@ async function getAllPublishedProjects(): Promise<Project[]> {
       const list = await db!.project.findMany({
         where: { status: "PUBLISHED" },
         orderBy: [{ order: "asc" }, { createdAt: "desc" }],
-        include: {
-          category: true,
-          cover: true,
-          mobileCover: true,
-          video: true,
-          gallery: { orderBy: { order: "asc" }, include: { asset: true } },
-        },
+        include: projectInclude,
       });
-      return list.map((p) =>
-        projectSchema.parse({
-          slug: p.slug,
-          title: p.title,
-          category: p.category.slug,
-          client: p.client ?? undefined,
-          hideClient: p.hideClient,
-          year: p.projectDate?.getFullYear(),
-          summary: p.summary,
-          overview: p.overview,
-          challenge: p.challenge ?? undefined,
-          approach: p.approach ?? undefined,
-          deliverables: Array.isArray(p.deliverables) ? p.deliverables : [],
-          outcome: p.outcome ?? undefined,
-          outcomeVerified: p.outcomeVerified,
-          cover: media({ image: p.cover, mobileImage: p.mobileCover, video: p.video, focal: p.focal, alt: p.title }),
-          externalVideoUrl: p.externalVideoUrl ?? undefined,
-          gallery: p.gallery.map((g) =>
-            g.asset.type === "VIDEO"
-              ? media({ video: g.asset, alt: g.caption ?? "" })
-              : media({ image: g.asset, alt: g.caption ?? g.asset.alt }),
-          ),
-          featured: p.featured,
-          order: p.order,
-          status: "published",
-          isDemo: p.isDemo,
-          seo: { title: p.seoTitle ?? undefined, description: p.seoDescription ?? undefined },
-        }),
-      );
+      return list.map(toProject);
     },
     seedProjects.filter((p) => p.status === "published"),
   );

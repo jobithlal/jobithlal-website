@@ -33,11 +33,29 @@ export default async function Overview() {
   ];
 
   return (
-    <div className="mx-auto max-w-6xl space-y-8">
+    <div className="space-y-8">
       <div>
         <h1 className="font-display text-3xl font-bold">Welcome, {user.name.split(" ")[0]}</h1>
         <p className="mt-1 text-sm text-fg-2">Here&apos;s what&apos;s happening on jobithlal.com.</p>
       </div>
+
+      <nav aria-label="Quick actions" className="flex flex-wrap gap-2">
+        {[
+          can(user.role, "portfolio:edit") && { href: "/admin/portfolio/new", label: "Add project" },
+          can(user.role, "media:upload") && { href: "/admin/media", label: "Upload media" },
+          can(user.role, "content:edit") && { href: "/admin/content/home", label: "Edit homepage" },
+          can(user.role, "inquiries:view") && { href: "/admin/inquiries", label: "View inquiries" },
+        ]
+          .filter((x): x is { href: string; label: string } => Boolean(x))
+          .map((a) => (
+            <Link key={a.href} href={a.href} className="inline-flex h-10 items-center rounded-lg border border-line bg-card px-4 text-sm font-semibold hover:border-accent">
+              {a.label}
+            </Link>
+          ))}
+        <a href="/" target="_blank" rel="noopener" className="inline-flex h-10 items-center rounded-lg border border-line bg-card px-4 text-sm font-semibold hover:border-accent">
+          Preview website ↗
+        </a>
+      </nav>
 
       <section aria-label="Summary" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map(({ label, value, icon: Icon, note }) => (
