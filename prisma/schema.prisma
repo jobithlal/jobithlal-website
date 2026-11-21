@@ -1,0 +1,422 @@
+// JOBITHLAL — database schema (PostgreSQL via Prisma 7).
+// Kept portable: no Postgres-only column types, so switching `provider` to "mysql"
+// only needs a fresh migration if the site is ever hosted on MySQL-only hosting.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ───────────────────────────── Auth & security ─────────────────────────────
+
+enum Role {
+  SUPER_ADMIN
+  EDITOR
+  VIEWER
+}
+
+model User {
+  id                String    @id @default(cuid())
+  email             String    @unique
+  name              String
+  role              Role      @default(VIEWER)
+  passwordHash      String
+  active            Boolean   @default(true)
+  emailVerifiedAt   DateTime?
+  /// Base32 TOTP secret, set once two-factor is confirmed.
+  totpSecret        String?
+  totpEnabled       Boolean   @default(false)
+  failedLoginCount  Int       @default(0)
+  lockedUntil       DateTime?
+  lastLoginAt       DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  sessions          Session[]
+  resetTokens       PasswordResetToken[]
+  auditLogs         AuditLog[]
+  inquiryNotes      InquiryNote[]
+  revisions         PageRevision[]
+  uploads           MediaAsset[]
+  backups           BackupRecord[]
+}
+
+model Session {
+  id          String   @id @default(cuid())
+  /// SHA-256 of the cookie token — the raw token is never stored.
+  tokenHash   String   @unique
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt   DateTime
+  lastSeenAt  DateTime @default(now())
+  ip          String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model PasswordResetToken {
+  id         String    @id @default(cuid())
+  tokenHash  String    @unique
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt  DateTime
+  usedAt     DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
+}
+
+/// Fixed-window rate limit buckets shared by every server instance.
+model RateLimit {
+  key       String   @id
+  count     Int
+  resetAt   DateTime
+
+  @@index([resetAt])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action     String
+  entity     String?
+  entityId   String?
+  details    Json?
+  ip         String?
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([entity, entityId])
+  @@index([userId])
+}
+
+// ───────────────────────────── Site configuration ─────────────────────────────
+
+/// Singleton rows (id = "default"). JSON payloads are validated by Zod schemas in src/content/schema.ts.
+model SiteSettings {
+  id         String   @id @default("default")
+  data       Json
+  updatedAt  DateTime @updatedAt
+}
+
+model ThemeSettings {
+  id         String   @id @default("default")
+  data       Json
+  updatedAt  DateTime @updatedAt
+}
+
+model SeoSettings {
+  id         String   @id @default("default")
+  data       Json
+  updatedAt  DateTime @updatedAt
+}
+
+model AnalyticsSettings {
+  id         String   @id @default("default")
+  data       Json
+  updatedAt  DateTime @updatedAt
+}
+
+model EmailTemplate {
+  id         String   @id @default(cuid())
+  key        String   @unique // "admin_inquiry" | "visitor_ack"
+  subject    String
+  body       String
+  enabled    Boolean  @default(true)
+  updatedAt  DateTime @updatedAt
+}
+
+enum NavLocation {
+  HEADER
+  FOOTER
+}
+
+model NavigationItem {
+  id         String      @id @default(cuid())
+  location   NavLocation
+  label      String
+  href       String
+  order      Int         @default(0)
+  visible    Boolean     @default(true)
+
+  @@index([location, order])
+}
+
+model SocialLink {
+  id         String   @id @default(cuid())
+  platform   String   @unique
+  url        String?
+  order      Int      @default(0)
+  visible    Boolean  @default(true)
+}
+
+// ───────────────────────────── Pages & content ─────────────────────────────
+
+enum PublishStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model Page {
+  id           String         @id @default(cuid())
+  slug         String         @unique // "home", "about", "contact", …
+  title        String
+  seo          Json?
+  status       PublishStatus  @default(PUBLISHED)
+  publishedAt  DateTime?
+  updatedAt    DateTime       @updatedAt
+  sections     PageSection[]
+  revisions    PageRevision[]
+}
+
+/// One structured, validated block of a page (hero, ticker, services intro…).
+model PageSection {
+  id             String   @id @default(cuid())
+  pageId         String
+  page           Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  key            String   // e.g. "hero"
+  order          Int      @default(0)
+  visible        Boolean  @default(true)
+  /// Live content. Draft edits stay in draftData until published.
+  publishedData  Json
+  draftData      Json?
+  updatedAt      DateTime @updatedAt
+
+  @@unique([pageId, key])
+  @@index([pageId, order])
+}
+
+model PageRevision {
+  id           String   @id @default(cuid())
+  pageId       String
+  page         Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  /// Full snapshot of every section at publish time.
+  snapshot     Json
+  note         String?
+  createdById  String?
+  createdBy    User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt    DateTime @default(now())
+
+  @@index([pageId, createdAt])
+}
+
+model Service {
+  id            String         @id @default(cuid())
+  slug          String         @unique
+  enabled       Boolean        @default(true)
+  order         Int            @default(0)
+  title         String
+  shortTitle    String
+  subtitle      String
+  description   String
+  icon          String
+  imageId       String?
+  image         MediaAsset?    @relation("ServiceImage", fields: [imageId], references: [id], onDelete: Restrict)
+  videoId       String?
+  video         MediaAsset?    @relation("ServiceVideo", fields: [videoId], references: [id], onDelete: Restrict)
+  focal         String         @default("50% 50%")
+  /// Landing page content: eyebrow, headline, features, process, faqs…
+  page          Json
+  seoTitle      String
+  seoDescription String
+  ogImageId     String?
+  ogImage       MediaAsset?    @relation("ServiceOg", fields: [ogImageId], references: [id], onDelete: Restrict)
+  ctaLabel      String
+  ctaHref       String
+  updatedAt     DateTime       @updatedAt
+}
+
+// ───────────────────────────── Portfolio ─────────────────────────────
+
+model ProjectCategory {
+  id        String    @id @default(cuid())
+  slug      String    @unique // "reels" | "motion" | "websites"
+  label     String
+  order     Int       @default(0)
+  projects  Project[]
+}
+
+model Project {
+  id                String           @id @default(cuid())
+  slug              String           @unique
+  title             String
+  categoryId        String
+  category          ProjectCategory  @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  client            String?
+  hideClient        Boolean          @default(false)
+  projectDate       DateTime?
+  summary           String
+  overview          String
+  challenge         String?
+  approach          String?
+  /// string[] stored as JSON for MySQL portability
+  deliverables      Json             @default("[]")
+  outcome           String?
+  /// Outcomes only render once an administrator confirms they're accurate.
+  outcomeVerified   Boolean          @default(false)
+  coverId           String?
+  cover             MediaAsset?      @relation("ProjectCover", fields: [coverId], references: [id], onDelete: Restrict)
+  mobileCoverId     String?
+  mobileCover       MediaAsset?      @relation("ProjectMobileCover", fields: [mobileCoverId], references: [id], onDelete: Restrict)
+  videoId           String?
+  video             MediaAsset?      @relation("ProjectVideo", fields: [videoId], references: [id], onDelete: Restrict)
+  externalVideoUrl  String?
+  focal             String           @default("50% 50%")
+  tags              Json             @default("[]")
+  featured          Boolean          @default(false)
+  order             Int              @default(0)
+  status            PublishStatus    @default(DRAFT)
+  isDemo            Boolean          @default(false)
+  seoTitle          String?
+  seoDescription    String?
+  ogImageId         String?
+  ogImage           MediaAsset?      @relation("ProjectOg", fields: [ogImageId], references: [id], onDelete: Restrict)
+  publishedAt       DateTime?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  gallery           ProjectMedia[]
+
+  @@index([status, featured, order])
+  @@index([categoryId])
+}
+
+/// Ordered gallery items. Deleting a project removes these links, never the media files.
+model ProjectMedia {
+  id         String     @id @default(cuid())
+  projectId  String
+  project    Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assetId    String
+  asset      MediaAsset @relation(fields: [assetId], references: [id], onDelete: Restrict)
+  order      Int        @default(0)
+  caption    String?
+
+  @@index([projectId, order])
+}
+
+// ───────────────────────────── Media library ─────────────────────────────
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+model MediaFolder {
+  id         String       @id @default(cuid())
+  name       String       @unique
+  createdAt  DateTime     @default(now())
+  assets     MediaAsset[]
+}
+
+model MediaAsset {
+  id             String        @id @default(cuid())
+  type           MediaType
+  /// Object-storage key (unique, server-generated).
+  storageKey     String        @unique
+  url            String
+  posterUrl      String?
+  filename       String
+  label          String?
+  alt            String        @default("")
+  mimeType       String
+  size           Int
+  width          Int?
+  height         Int?
+  duration       Float?
+  folderId       String?
+  folder         MediaFolder?  @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  uploadedById   String?
+  uploadedBy     User?         @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  serviceImages     Service[]      @relation("ServiceImage")
+  serviceVideos     Service[]      @relation("ServiceVideo")
+  serviceOg         Service[]      @relation("ServiceOg")
+  projectCovers     Project[]      @relation("ProjectCover")
+  projectMobile     Project[]      @relation("ProjectMobileCover")
+  projectVideos     Project[]      @relation("ProjectVideo")
+  projectOg         Project[]      @relation("ProjectOg")
+  projectGalleries  ProjectMedia[]
+
+  @@index([type, createdAt])
+  @@index([folderId])
+}
+
+// ───────────────────────────── Inquiries ─────────────────────────────
+
+enum InquiryStatus {
+  NEW
+  CONTACTED
+  IN_DISCUSSION
+  PROPOSAL_SENT
+  WON
+  CLOSED
+}
+
+enum EmailStatus {
+  PENDING
+  SENT
+  FAILED
+  NOT_CONFIGURED
+  SKIPPED
+}
+
+model Inquiry {
+  id                 String        @id @default(cuid())
+  name               String
+  email              String
+  company            String?
+  phone              String?
+  service            String
+  budget             String?
+  timeline           String?
+  details            String
+  sourcePage         String?
+  status             InquiryStatus @default(NEW)
+  readAt             DateTime?
+  /// Duplicate-submission guard (client-generated key).
+  submissionKey      String?       @unique
+  ipHash             String?
+  adminEmailStatus   EmailStatus   @default(PENDING)
+  adminEmailError    String?
+  visitorEmailStatus EmailStatus   @default(SKIPPED)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  notes              InquiryNote[]
+
+  @@index([status, createdAt])
+  @@index([createdAt])
+}
+
+model InquiryNote {
+  id         String   @id @default(cuid())
+  inquiryId  String
+  inquiry    Inquiry  @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+  authorId   String?
+  author     User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  body       String
+  createdAt  DateTime @default(now())
+
+  @@index([inquiryId])
+}
+
+// ───────────────────────────── Backups ─────────────────────────────
+
+model BackupRecord {
+  id           String   @id @default(cuid())
+  kind         String   // "export" | "restore"
+  version      Int
+  summary      Json
+  includesMedia Boolean @default(false)
+  createdById  String?
+  createdBy    User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt    DateTime @default(now())
+}

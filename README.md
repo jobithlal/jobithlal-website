@@ -1,36 +1,99 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# JOBITHLAL — Creative Digital Studio website
 
-## Getting Started
+Next.js 16 (App Router, Cache Components) · TypeScript · Tailwind CSS 4 · Motion · Prisma 7 + PostgreSQL · Zod.
 
-First, run the development server:
+## Status
+
+| Phase | Scope | Status |
+|---|---|---|
+| 1–4 | Public website: homepage, 3 service pages, work + case studies, about, contact, legal, SEO | ✅ Done |
+| 5 | Database schema + migrations + seed, admin authentication, roles, audit log, inquiry storage | ✅ Done |
+| 6 | Admin dashboard modules: content editor, portfolio, media library, inquiries, settings, users | ⏳ Next |
+| 7 | Appearance manager, SEO manager, analytics, backup/restore | ⏳ |
+| 8–10 | Polish, Playwright test suite, deployment | ⏳ |
+
+## Quick start (Mac)
+
+Double-click **Start Website.command** — it installs packages on first run and opens http://localhost:3000.
+Or in Terminal:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev            # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The site runs without any configuration. To enable the admin, connect a database (below).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Connecting the database (enables /admin)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Create a PostgreSQL database (Neon, Supabase, or your host's PostgreSQL) and copy its connection string.
+2. `cp .env.example .env` and set `DATABASE_URL`, `AUTH_SECRET`, and a temporary `ADMIN_SETUP_TOKEN`.
+3. Create the tables and load the current site content:
+   ```bash
+   npm run db:deploy    # apply migrations
+   npm run db:seed      # safe to re-run: never overwrites edited content, never creates users
+   ```
+4. Create the first Super Admin — either:
+   - visit **/admin/setup** and enter the `ADMIN_SETUP_TOKEN` (the page locks itself once an account exists), or
+   - `npm run admin:create -- --email you@example.com --name "Jobith Lal"` (prompts for the password).
+5. Remove `ADMIN_SETUP_TOKEN` from the environment.
 
-## Learn More
+`npm run admin:create` also resets a forgotten password from the server shell when email isn't configured.
 
-To learn more about Next.js, take a look at the following resources:
+## How content works
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Public pages read content only through `src/lib/content.ts`:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- With a database: content comes from PostgreSQL, validated by the Zod schemas in `src/content/schema.ts`,
+  cached per type with tags. Admin saves (Phase 6) call `updateTag()` so changes appear on the next visit.
+- Database missing or unreachable: the same functions serve the seed content in `src/content/*.ts`,
+  so the site never goes blank (errors are logged).
+- Homepage sections can be hidden individually (`PageSection.visible`).
+- **Sample projects** (flagged `isDemo`, badged “Sample layout”, `noindex`, excluded from the sitemap)
+  disappear automatically as soon as one real project is published.
+- **Statistics** only render when marked verified. **Social links** stay hidden until real URLs are entered.
 
-## Deploy on Vercel
+## Security model
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **Passwords:** scrypt (Node built-in), 12+ characters. **Sessions:** random 256-bit token in an
+  `HttpOnly`, `SameSite=Lax`, `__Host-` cookie; only its SHA-256 is stored; 7-day sliding expiry.
+- **Brute force:** per-IP and per-account rate limits (database-backed), account lock for 15 minutes after
+  5 failed passwords, constant-time responses for unknown emails, generic error messages.
+- **Two-factor:** TOTP verification is built into sign-in; enrolment UI arrives with Users & Security (Phase 6).
+- **Authorization:** Super Admin / Editor / Viewer permission matrix in `src/lib/auth/permissions.ts`,
+  enforced on the server in every admin page (`requirePage`) and action (`requireAction`).
+- **No self-registration.** First account only via setup token or server CLI.
+- **Audit log** of sign-ins, failures, lockouts, resets and admin changes (visible to Super Admins).
+- `/admin` responses carry `noindex`, `no-store` and `X-Frame-Options: DENY`.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Contact form
+
+Server Action (`src/app/actions/contact.ts`): Zod validation, honeypot, minimum fill time, rate limit,
+duplicate-submission key. Each inquiry is **saved to the database first**, then emailed via Resend;
+delivery status (`SENT` / `FAILED` / `NOT_CONFIGURED`) is recorded on the inquiry. With no database and
+no email, the visitor gets pre-filled email/WhatsApp buttons so nothing is lost.
+
+## Hosting note
+
+The original brief targets Vercel + managed PostgreSQL. The site runs on any Node.js 20.9+ host; on
+cPanel-style hosting use “Setup Node.js App”, `npm run build`, and `npm start`. If a host only offers
+MySQL, the schema is kept portable (no PostgreSQL-only column types): change the provider and adapter
+and generate a fresh migration.
+
+## Scripts
+
+| Command | What it does |
+|---|---|
+| `npm run dev` / `build` / `start` | Develop, build, serve |
+| `npm run lint` / `typecheck` | Code checks |
+| `npm run db:migrate` | Create a new migration in development |
+| `npm run db:deploy` | Apply migrations (production) |
+| `npm run db:seed` | Load default content (idempotent) |
+| `npm run admin:create` | Create an admin or reset a password |
+
+## Known limitations
+
+- Admin modules for editing content, portfolio, media, inquiries and settings are Phase 6 — the overview
+  shows live counts and setup status today.
+- The design was built from the written brief; the visual reference image wasn't available.
+- Legal pages are starting templates — have them reviewed before launch.
