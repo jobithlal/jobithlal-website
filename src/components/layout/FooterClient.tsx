@@ -24,9 +24,10 @@ export function BackToTop() {
         window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" });
         document.getElementById("main")?.focus({ preventScroll: true });
       }}
+      aria-label="Back to top"
       className="group inline-flex items-center gap-2 uppercase tracking-[0.18em] text-fg-2 hover:text-accent"
     >
-      Back to top
+      <span className="hidden sm:inline">Back to top</span>
       <span className="grid size-8 place-items-center rounded-full border border-line transition-colors group-hover:border-accent">
         <ArrowUp className="size-3.5 transition-transform group-hover:-translate-y-0.5" aria-hidden />
       </span>

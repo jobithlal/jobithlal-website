@@ -10,8 +10,8 @@ export function Footer({ site, services }: { site: SiteSettings; services: Servi
   const socials = site.socials.filter((s) => s.url);
   return (
     <footer className="relative border-t border-line bg-bg">
-      <div className="container-x grid gap-12 py-16 md:grid-cols-12 md:py-20">
-        <div className="md:col-span-4">
+      <div className="container-x grid grid-cols-2 gap-x-6 gap-y-12 py-16 md:grid-cols-12 md:gap-12 md:py-20">
+        <div className="col-span-2 md:col-span-4">
           <Logo text={site.logoText} subtitle={site.logoSubtitle} imageUrl={site.logoImageUrl} />
           <p className="mt-6 max-w-xs text-fg-2">{site.tagline}</p>
           <ul className="mt-8 space-y-3 text-sm text-fg-2">
@@ -55,7 +55,7 @@ export function Footer({ site, services }: { site: SiteSettings; services: Servi
         </FooterCol>
 
         {socials.length > 0 && (
-          <FooterCol title="Follow" className="md:col-span-2">
+          <FooterCol title="Follow" className="col-span-2 md:col-span-2">
             {socials.map((s) => (
               <li key={s.platform}>
                 <a href={s.url} target="_blank" rel="noopener noreferrer" className="link-underline hover:text-fg">
@@ -76,11 +76,11 @@ export function Footer({ site, services }: { site: SiteSettings; services: Servi
       </div>
 
       <div className="border-t border-line">
-        <div className="container-x flex flex-col items-start justify-between gap-4 py-6 text-xs text-muted sm:flex-row sm:items-center">
+        <div className="container-x flex items-center justify-between gap-3 whitespace-nowrap py-5 text-[0.7rem] text-muted min-[360px]:text-xs sm:gap-4 sm:py-6">
           <p>
-            © <CopyrightYear /> {site.name}. All rights reserved.
+            © <CopyrightYear /> {site.name}<span className="hidden sm:inline">. All rights reserved.</span>
           </p>
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3 min-[360px]:gap-4 sm:gap-6">
             <Link href="/privacy-policy" className="link-underline hover:text-fg">
               Privacy Policy
             </Link>
@@ -99,7 +99,7 @@ function FooterCol({ title, children, className }: { title: string; children: Re
   return (
     <div className={className}>
       <h2 className="eyebrow mb-5">{title}</h2>
-      <ul className="space-y-3 text-fg-2">{children}</ul>
+      <ul className="space-y-3 text-[0.95rem] text-fg-2 sm:text-base">{children}</ul>
     </div>
   );
 }
