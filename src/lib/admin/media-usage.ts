@@ -11,7 +11,7 @@ export type Usage = { label: string; href: string };
 export async function getAssetUsage(asset: { id: string; url: string; posterUrl?: string | null }): Promise<Usage[]> {
   const db = requireDb();
   const urls = [asset.url, asset.posterUrl].filter(Boolean) as string[];
-  const [services, projects, gallery, sections, settings] = await Promise.all([
+  const [services, projects, gallery, sections, settings, seo] = await Promise.all([
     db.service.findMany({
       where: { OR: [{ imageId: asset.id }, { videoId: asset.id }, { ogImageId: asset.id }] },
       select: { slug: true, title: true },
@@ -30,6 +30,7 @@ export async function getAssetUsage(asset: { id: string; url: string; posterUrl?
       ),
     ).then((r) => r.flat()),
     Promise.all(urls.map((u) => db.$queryRaw<{ id: string }[]>`SELECT "id" FROM "SiteSettings" WHERE "data"::text LIKE ${"%" + u + "%"}`)).then((r) => r.flat()),
+    Promise.all(urls.map((u) => db.$queryRaw<{ id: string }[]>`SELECT "id" FROM "SeoSettings" WHERE "data"::text LIKE ${"%" + u + "%"}`)).then((r) => r.flat()),
   ]);
 
   const out: Usage[] = [
@@ -37,7 +38,8 @@ export async function getAssetUsage(asset: { id: string; url: string; posterUrl?
     ...projects.map((p) => ({ label: `Project · ${p.title}`, href: `/admin/portfolio/${p.id}` })),
     ...gallery.map((g) => ({ label: `Gallery · ${g.project.title}`, href: `/admin/portfolio/${g.project.id}` })),
     ...sections.map((s) => ({ label: `Page · ${s.slug} · ${s.key}`, href: `/admin/content/${s.slug}` })),
-    ...(settings.length ? [{ label: "Site settings (logo / share image)", href: "/admin/settings" }] : []),
+    ...(settings.length ? [{ label: "Site settings (logo)", href: "/admin/settings" }] : []),
+    ...(seo.length ? [{ label: "SEO (share image)", href: "/admin/seo" }] : []),
   ];
   return out.filter((u, i, a) => a.findIndex((x) => x.label === u.label) === i);
 }

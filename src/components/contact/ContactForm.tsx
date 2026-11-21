@@ -4,6 +4,7 @@ import { startTransition, useActionState, useEffect, useId, useRef, useSyncExter
 import { AnimatePresence, motion } from "motion/react";
 import { CheckCircle2, Loader2, Mail, MessageCircle, AlertTriangle } from "lucide-react";
 import { submitInquiry } from "@/app/actions/contact";
+import { track } from "@/components/analytics/Analytics";
 import { budgetOptions, serviceOptions, timelineOptions, type ContactState } from "@/lib/contact-schema";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
@@ -34,8 +35,11 @@ export function ContactForm() {
     submissionKey.current = newKey();
   }, []);
 
+  const lastService = useRef("");
   useEffect(() => {
     if (state.status !== "idle") statusRef.current?.focus();
+    // Conversion event (only sent if the visitor accepted analytics).
+    if (state.status === "success") track("contact_submit", { service: lastService.current });
   }, [state]);
 
   const errors = state.status === "invalid" ? state.fieldErrors : {};
@@ -67,6 +71,7 @@ export function ContactForm() {
         const fd = new FormData(e.currentTarget);
         fd.set("startedAt", String(startedAt.current));
         fd.set("sourcePage", window.location.pathname);
+        lastService.current = String(fd.get("service") ?? "");
         fd.set("submissionKey", submissionKey.current);
         startTransition(() => action(fd));
       }}

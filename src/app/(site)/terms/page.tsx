@@ -1,14 +1,15 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { LegalPage } from "@/components/ui/LegalPage";
-import { pageMetadata } from "@/lib/seo";
+import { seoMetadata } from "@/lib/seo";
 import { siteSettings as site } from "@/content/site";
 
-export const metadata: Metadata = pageMetadata({
+export async function generateMetadata(): Promise<Metadata> {
+  return seoMetadata("/terms", {
   title: "Terms & Conditions",
-  description: "Terms governing use of the JOBITHLAL website.",
-  path: "/terms",
-});
+  description: "Terms governing use of the JOBITHLAL website."
+  });
+}
 
 // Starting template. Project-specific terms belong in each signed proposal. Have it reviewed before launch.
 export default function TermsPage() {

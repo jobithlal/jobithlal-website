@@ -1,16 +1,20 @@
 import type { Metadata } from "next";
 import { LegalPage } from "@/components/ui/LegalPage";
-import { pageMetadata } from "@/lib/seo";
+import { seoMetadata } from "@/lib/seo";
 import { siteSettings as site } from "@/content/site";
+import { getAnalyticsSettings } from "@/lib/content";
 
-export const metadata: Metadata = pageMetadata({
+export async function generateMetadata(): Promise<Metadata> {
+  return seoMetadata("/privacy-policy", {
   title: "Privacy Policy",
-  description: "How JOBITHLAL collects, uses and protects personal information submitted through this website.",
-  path: "/privacy-policy",
-});
+  description: "How JOBITHLAL collects, uses and protects personal information submitted through this website."
+  });
+}
 
 // Starting template written for this site's actual data flows. Have it reviewed by a legal advisor before launch.
-export default function PrivacyPage() {
+export default async function PrivacyPage() {
+  const analytics = await getAnalyticsSettings();
+  const ga = analytics.enabled && Boolean(analytics.ga4MeasurementId);
   return (
     <LegalPage title="Privacy Policy" updated="20 November 2026">
       <section>
@@ -51,10 +55,22 @@ export default function PrivacyPage() {
       </section>
       <section>
         <h2>Cookies and analytics</h2>
-        <p>
-          This website does not currently use advertising or analytics cookies. If analytics are introduced, they will only run after you give
-          consent, and this policy will be updated.
-        </p>
+        {ga ? (
+          <>
+            <p>
+              With your permission, this site uses <strong>Google Analytics 4</strong> to understand how visitors use it — for example which pages are
+              viewed, how people arrive, and whether the contact form is used. It sets first-party cookies (named <code>_ga</code> and{" "}
+              <code>_ga_*</code>) and Google processes the data on my behalf.{" "}
+              {analytics.requireConsent
+                ? "Nothing is loaded until you choose “Accept analytics” in the cookie banner; if you decline, no analytics cookies are set."
+                : "Analytics runs on page load."}{" "}
+              No advertising or remarketing features are used.
+            </p>
+            {analytics.requireConsent && <p>You can change your choice at any time using “Cookie settings” in the footer.</p>}
+          </>
+        ) : (
+          <p>This website does not currently use analytics or advertising cookies.</p>
+        )}
       </section>
       <section>
         <h2>Retention</h2>

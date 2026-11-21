@@ -13,6 +13,10 @@ import {
   siteSettingsSchema,
   tickerSchema,
   type HomeContent,
+  seoSettingsSchema,
+  analyticsSettingsSchema,
+  type SeoSettings,
+  type AnalyticsSettings,
   type Media,
   type Project,
   type Service,
@@ -35,6 +39,8 @@ export const TAGS = {
   services: "content:services",
   projects: "content:projects",
   nav: "content:nav",
+  seo: "content:seo",
+  analytics: "content:analytics",
 } as const;
 
 async function fromDb<T>(label: string, load: () => Promise<T | null>, fallback: T): Promise<T> {
@@ -273,4 +279,51 @@ const serviceToCategory: Record<ServiceSlug, Project["category"]> = {
 
 export async function getProjectsForService(slug: ServiceSlug) {
   return (await getProjects()).filter((p) => p.category === serviceToCategory[slug]);
+}
+
+// ─────────────────────────── SEO & analytics ───────────────────────────
+
+const seedSeo: SeoSettings = {
+  siteName: seedSite.name,
+  defaultTitle: "JOBITHLAL — Social Media Reels, Motion Graphics & Websites in Doha",
+  defaultDescription:
+    "JOBITHLAL is a creative digital studio in Doha, Qatar creating high-impact social media reels, motion graphics and conversion-focused websites.",
+  canonicalDomain: seedSite.url,
+  allowIndexing: true,
+  verification: { google: undefined, bing: undefined },
+  pages: {},
+};
+
+export async function getSeoSettings(): Promise<SeoSettings> {
+  "use cache";
+  cacheTag(TAGS.seo);
+  cacheLife("max");
+  return fromDb(
+    "seo",
+    async () => {
+      const row = await db!.seoSettings.findUnique({ where: { id: "default" } });
+      if (!row) return null;
+      const r = seoSettingsSchema.safeParse({ ...seedSeo, ...(row.data as object) });
+      return r.success ? r.data : null;
+    },
+    seedSeo,
+  );
+}
+
+const seedAnalytics: AnalyticsSettings = { enabled: false, ga4MeasurementId: null, requireConsent: true };
+
+export async function getAnalyticsSettings(): Promise<AnalyticsSettings> {
+  "use cache";
+  cacheTag(TAGS.analytics);
+  cacheLife("max");
+  return fromDb(
+    "analytics",
+    async () => {
+      const row = await db!.analyticsSettings.findUnique({ where: { id: "default" } });
+      if (!row) return null;
+      const r = analyticsSettingsSchema.safeParse(row.data);
+      return r.success ? r.data : null;
+    },
+    seedAnalytics,
+  );
 }

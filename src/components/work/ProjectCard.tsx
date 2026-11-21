@@ -37,6 +37,8 @@ export function ProjectCard({ project, className, aspect = "aspect-[4/5]" }: { p
       onFocus={() => setHover(true)}
       onBlur={() => setHover(false)}
       className={cn("group block", className)}
+      data-track="portfolio_open"
+      data-track-label={project.title}
       aria-label={`${project.title}${project.isDemo ? " (sample layout)" : ""} — view project`}
     >
       <div className={cn("relative overflow-hidden rounded-[var(--radius-card)] border border-line bg-card transition-colors duration-500 group-hover:border-accent/60", aspect)}>

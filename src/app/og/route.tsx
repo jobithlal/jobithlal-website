@@ -1,11 +1,12 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "JOBITHLAL — Stop the scroll. Make an impact. Drive results.";
-export const size = { width: 1200, height: 630 };
-export const contentType = "image/png";
+const size = { width: 1200, height: 630 };
 
-/** Default social share image (replaced per page/project by admin uploads in Phase 7). */
-export default function OgImage() {
+/**
+ * Generated default social share image, served at /og. Used whenever no share
+ * image is set in the SEO manager or on the page/project/service itself.
+ */
+export async function GET() {
   return new ImageResponse(
     (
       <div
@@ -34,6 +35,6 @@ export default function OgImage() {
         </div>
       </div>
     ),
-    size,
+    { ...size, headers: { "Cache-Control": "public, max-age=86400, s-maxage=604800" } },
   );
 }

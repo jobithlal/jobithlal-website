@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getHome, getProject, getProjects } from "@/lib/content";
 import { categoryLabels } from "@/content/projects";
-import { pageMetadata } from "@/lib/seo";
+import { seoMetadata } from "@/lib/seo";
 import { ProjectDetail } from "@/components/work/ProjectDetail";
 
 export async function generateStaticParams() {
@@ -16,11 +16,11 @@ export async function generateMetadata({ params }: PageProps<"/work/[slug]">): P
   const { slug } = await params;
   const p = await getProject(slug);
   if (!p) return {};
-  return pageMetadata({
+  return seoMetadata(`/work/${p.slug}`, {
     title: p.seo.title ?? `${p.title} — ${categoryLabels[p.category]}`,
     description: p.seo.description ?? p.summary,
-    path: `/work/${p.slug}`,
     noindex: p.isDemo,
+    ogImageUrl: p.cover.imageUrl,
   });
 }
 

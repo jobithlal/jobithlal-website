@@ -1,16 +1,17 @@
 import type { Metadata } from "next";
 import { getHome, getProjects } from "@/lib/content";
-import { breadcrumbJsonLd, JsonLd, pageMetadata } from "@/lib/seo";
+import { breadcrumbJsonLd, JsonLd, seoMetadata } from "@/lib/seo";
 import { PageHero } from "@/components/ui/PageHero";
 import { WorkGrid } from "@/components/work/WorkGrid";
 import { FinalCta } from "@/components/sections/FinalCta";
 
-export const metadata: Metadata = pageMetadata({
+export async function generateMetadata(): Promise<Metadata> {
+  return seoMetadata("/work", {
   title: "Work — Reels, Motion Graphics & Websites",
   description:
-    "Selected projects by JOBITHLAL across social media reels, motion graphics and website development, from a creative digital studio in Doha, Qatar.",
-  path: "/work",
-});
+    "Selected projects by JOBITHLAL across social media reels, motion graphics and website development, from a creative digital studio in Doha, Qatar."
+  });
+}
 
 export default async function WorkPage() {
   const [projects, home] = await Promise.all([getProjects(), getHome()]);

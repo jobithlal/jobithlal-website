@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 import { requirePage } from "@/lib/auth/session";
 import { can } from "@/lib/auth/permissions";
@@ -38,8 +39,11 @@ export default async function SettingsPage() {
           confirmation={process.env.CONTACT_SEND_CONFIRMATION === "true"}
           templates={templates.map((t) => ({ key: t.key, subject: t.subject, body: t.body, enabled: t.enabled }))}
         />
-        <Card title="Coming in the next phase">
-          <p className="text-sm text-fg-2">Design &amp; appearance, SEO manager, analytics and backup &amp; restore are part of Phase 7.</p>
+        <Card title="Search &amp; analytics">
+          <p className="text-sm text-fg-2">
+            Search-engine settings live under <Link href="/admin/seo" className="text-accent hover:underline">SEO</Link>; visitor tracking and reports under{" "}
+            <Link href="/admin/analytics" className="text-accent hover:underline">Analytics</Link>.
+          </p>
         </Card>
       </div>
     </>

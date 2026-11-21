@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Check } from "lucide-react";
 import { getHome, getProjectsForService, getService, getServices } from "@/lib/content";
-import { breadcrumbJsonLd, faqJsonLd, JsonLd, pageMetadata, serviceJsonLd } from "@/lib/seo";
+import { breadcrumbJsonLd, faqJsonLd, JsonLd, seoMetadata, serviceJsonLd } from "@/lib/seo";
 import { PageHero } from "@/components/ui/PageHero";
 import { ButtonLink } from "@/components/ui/Button";
 import { Eyebrow } from "@/components/ui/Section";
@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: PageProps<"/services/[slug]">
   const { slug } = await params;
   const s = await getService(slug);
   if (!s) return {};
-  return pageMetadata({ title: s.seo.title, description: s.seo.description, path: `/services/${s.slug}` });
+  return seoMetadata(`/services/${s.slug}`, { title: s.seo.title, description: s.seo.description, ogImageUrl: s.media.imageUrl });
 }
 
 export default async function ServicePage({ params }: PageProps<"/services/[slug]">) {

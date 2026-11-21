@@ -9,7 +9,7 @@ Next.js 16 (App Router, Cache Components) · TypeScript · Tailwind CSS 4 · Mot
 | 1–4 | Public website: homepage, 3 service pages, work + case studies, about, contact, legal, SEO | ✅ Done |
 | 5 | Database schema + migrations + seed, admin authentication, roles, audit log, inquiry storage | ✅ Done |
 | 6 | Admin: homepage editor (draft/preview/publish/history), services, portfolio, media library, inquiries (notes, CSV), settings, users & 2FA, activity log | ✅ Done |
-| 7 | Appearance manager, SEO manager, analytics, backup/restore | ⏳ Next |
+| 7 | SEO manager ✅, analytics ✅ · appearance manager, backup/restore | ⏳ In progress |
 | 8–10 | Polish, Playwright test suite, deployment | ⏳ |
 
 ## Quick start (Mac)
@@ -104,7 +104,9 @@ and generate a fresh migration.
 
 ## Known limitations
 
-- Design & appearance, SEO manager, analytics and backup/restore are Phase 7.
+- SEO: Admin → SEO (Super Admin edits). Per-page titles/descriptions/share images, indexing switch, Google/Bing verification.
+- Analytics: Admin → Analytics. Set the GA4 Measurement ID to enable tracking (consent banner by default). For traffic reports inside the dashboard, add `GA4_PROPERTY_ID`, `GA4_CLIENT_EMAIL`, `GA4_PRIVATE_KEY` (a service account with Viewer access on the property).
+- Design & appearance and backup/restore are still to come.
 - Services save straight to the live site (no separate draft step); the homepage and projects have full draft → preview → publish.
 - The design was built from the written brief; the visual reference image wasn't available.
 - Legal pages are starting templates — have them reviewed before launch.

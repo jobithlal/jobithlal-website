@@ -3,10 +3,11 @@ import { Mail, MapPin, MessageCircle } from "lucide-react";
 import { footerNav } from "./nav";
 import { Logo } from "./Logo";
 import { BackToTop, CopyrightYear } from "./FooterClient";
+import { CookieSettingsButton } from "@/components/analytics/Analytics";
 import type { SiteSettings, Service } from "@/content/schema";
 import { formatPhone, whatsappLink } from "@/lib/utils";
 
-export function Footer({ site, services }: { site: SiteSettings; services: Service[] }) {
+export function Footer({ site, services, cookieSettings = false }: { site: SiteSettings; services: Service[]; cookieSettings?: boolean }) {
   const socials = site.socials.filter((s) => s.url);
   return (
     <footer className="relative border-t border-line bg-bg">
@@ -87,6 +88,11 @@ export function Footer({ site, services }: { site: SiteSettings; services: Servi
             <Link href="/terms" className="link-underline hover:text-fg">
               Terms
             </Link>
+            {cookieSettings && (
+              <span className="hidden sm:inline">
+                <CookieSettingsButton />
+              </span>
+            )}
             <BackToTop />
           </div>
         </div>

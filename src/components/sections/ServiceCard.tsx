@@ -21,6 +21,8 @@ export function ServiceCard({ service, index, className }: { service: Service; i
   return (
     <Link
       href={`/services/${service.slug}`}
+      data-track="service_open"
+      data-track-label={service.title}
       onPointerEnter={() => setHover(true)}
       onPointerLeave={() => setHover(false)}
       onFocus={() => setHover(true)}

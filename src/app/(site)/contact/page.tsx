@@ -1,15 +1,16 @@
 import type { Metadata } from "next";
 import { getHome, getSiteSettings } from "@/lib/content";
-import { breadcrumbJsonLd, JsonLd, pageMetadata } from "@/lib/seo";
+import { breadcrumbJsonLd, JsonLd, seoMetadata } from "@/lib/seo";
 import { Breadcrumbs } from "@/components/ui/Section";
 import { Contact } from "@/components/sections/Contact";
 
-export const metadata: Metadata = pageMetadata({
+export async function generateMetadata(): Promise<Metadata> {
+  return seoMetadata("/contact", {
   title: "Contact — Start a Project",
   description:
-    "Tell JOBITHLAL about your project — social media reels, motion graphics or a new website. Based in Doha, Qatar. Email, WhatsApp or the project form.",
-  path: "/contact",
-});
+    "Tell JOBITHLAL about your project — social media reels, motion graphics or a new website. Based in Doha, Qatar. Email, WhatsApp or the project form."
+  });
+}
 
 export default async function ContactPage() {
   const [home, site] = await Promise.all([getHome(), getSiteSettings()]);

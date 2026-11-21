@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getHome, getServices, getSiteSettings } from "@/lib/content";
-import { breadcrumbJsonLd, JsonLd, pageMetadata } from "@/lib/seo";
+import { breadcrumbJsonLd, JsonLd, seoMetadata } from "@/lib/seo";
 import { PageHero } from "@/components/ui/PageHero";
 import { ButtonLink } from "@/components/ui/Button";
 import { Eyebrow } from "@/components/ui/Section";
@@ -10,12 +10,13 @@ import { Process } from "@/components/sections/Process";
 import { FinalCta } from "@/components/sections/FinalCta";
 import { ServiceCard } from "@/components/sections/ServiceCard";
 
-export const metadata: Metadata = pageMetadata({
+export async function generateMetadata(): Promise<Metadata> {
+  return seoMetadata("/about", {
   title: "About Jobith Lal — Creative Director, Doha",
   description:
-    "Jobith Lal brings 16+ years of creative media and digital production experience to social media reels, motion graphics and website development in Doha, Qatar.",
-  path: "/about",
-});
+    "Jobith Lal brings 16+ years of creative media and digital production experience to social media reels, motion graphics and website development in Doha, Qatar."
+  });
+}
 
 export default async function AboutPage() {
   const [home, site, services] = await Promise.all([getHome(), getSiteSettings(), getServices()]);

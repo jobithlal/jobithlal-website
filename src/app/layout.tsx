@@ -2,32 +2,34 @@ import type { Metadata, Viewport } from "next";
 import "@fontsource-variable/space-grotesk";
 import "@fontsource-variable/inter";
 import "./globals.css";
-import { getSiteSettings } from "@/lib/content";
-
-const DEFAULT_DESCRIPTION =
-  "JOBITHLAL is a creative digital studio in Doha, Qatar creating high-impact social media reels, motion graphics and conversion-focused websites.";
+import { getSeoSettings, getSiteSettings } from "@/lib/content";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const site = await getSiteSettings();
+  const [site, seo] = await Promise.all([getSiteSettings(), getSeoSettings()]);
+  const indexable = seo.allowIndexing && process.env.NEXT_PUBLIC_ALLOW_INDEXING !== "false";
+  const image = seo.shareImageUrl ?? "/og";
   return {
-    metadataBase: new URL(site.url),
-    title: {
-      default: `${site.name} — Social Media Reels, Motion Graphics & Websites in Doha`,
-      template: `%s | ${site.name}`,
-    },
-    description: DEFAULT_DESCRIPTION,
-    applicationName: site.name,
+    metadataBase: new URL(seo.canonicalDomain || site.url),
+    title: { default: seo.defaultTitle, template: `%s | ${seo.siteName}` },
+    description: seo.defaultDescription,
+    applicationName: seo.siteName,
     authors: [{ name: "Jobith Lal", url: site.url }],
     alternates: { canonical: "/" },
     openGraph: {
       type: "website",
-      siteName: site.name,
+      siteName: seo.siteName,
       locale: "en_US",
       url: "/",
-      title: `${site.name} — Creative Digital Studio`,
-      description: DEFAULT_DESCRIPTION,
+      title: seo.defaultTitle,
+      description: seo.defaultDescription,
+      images: [{ url: image, width: 1200, height: 630, alt: seo.siteName }],
     },
-    twitter: { card: "summary_large_image" },
+    twitter: { card: "summary_large_image", images: [image] },
+    robots: indexable ? { index: true, follow: true } : { index: false, follow: false },
+    verification: {
+      ...(seo.verification.google ? { google: seo.verification.google } : {}),
+      ...(seo.verification.bing ? { other: { "msvalidate.01": seo.verification.bing } } : {}),
+    },
     formatDetection: { telephone: false },
   };
 }

@@ -185,3 +185,61 @@ export const homeSchema = z.object({
   contact: z.object({ heading: req(120), accent: z.string().trim().max(80), description: req(600) }),
 });
 export type HomeContent = z.infer<typeof homeSchema>;
+
+/* ───────────────────────────── SEO ───────────────────────────── */
+
+export const SEO_PAGES = [
+  { path: "/", label: "Home" },
+  { path: "/work", label: "Work" },
+  { path: "/about", label: "About" },
+  { path: "/contact", label: "Contact" },
+  { path: "/privacy-policy", label: "Privacy Policy" },
+  { path: "/terms", label: "Terms" },
+] as const;
+
+const optText = (max: number) => z.string().trim().max(max).optional().transform((v) => (v ? v : undefined));
+const optUrl = z.string().trim().url().optional().or(z.literal("").transform(() => undefined));
+
+export const pageSeoSchema = z.object({
+  title: optText(70),
+  description: optText(170),
+  ogTitle: optText(90),
+  ogDescription: optText(200),
+  ogImageUrl: optUrl,
+  noindex: z.boolean().default(false),
+});
+export type PageSeo = z.infer<typeof pageSeoSchema>;
+
+export const seoSettingsSchema = z.object({
+  siteName: z.string().trim().min(1).max(60),
+  defaultTitle: z.string().trim().min(1).max(90),
+  defaultDescription: z.string().trim().min(1).max(170),
+  shareImageUrl: optUrl,
+  canonicalDomain: z.string().trim().url(),
+  allowIndexing: z.boolean(),
+  verification: z
+    .object({
+      google: optText(120),
+      bing: optText(120),
+    })
+    .default({ google: undefined, bing: undefined }),
+  pages: z.record(z.string(), pageSeoSchema).default({}),
+});
+export type SeoSettings = z.infer<typeof seoSettingsSchema>;
+
+/* ─────────────────────────── Analytics ─────────────────────────── */
+
+export const analyticsSettingsSchema = z.object({
+  enabled: z.boolean().default(false),
+  /** GA4 measurement ID, e.g. G-ABC123XYZ */
+  ga4MeasurementId: z
+    .string()
+    .trim()
+    .regex(/^G-[A-Z0-9]{4,16}$/, "Use the GA4 Measurement ID, e.g. G-ABC123XYZ.")
+    .nullable()
+    .optional()
+    .transform((v) => v ?? null),
+  /** Ask visitors for consent before any analytics cookie is set. */
+  requireConsent: z.boolean().default(true),
+});
+export type AnalyticsSettings = z.infer<typeof analyticsSettingsSchema>;

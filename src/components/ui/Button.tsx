@@ -86,7 +86,7 @@ export function ButtonLink({
   ...rest
 }: CommonProps & Omit<ComponentProps<typeof Link>, "className" | "children">) {
   const el = (
-    <Link href={href} className={cn(base, variants[variant], className)} {...rest}>
+    <Link href={href} className={cn(base, variants[variant], className)} data-track="cta_click" {...rest}>
       <span className="relative z-10">{children}</span>
       <span className="relative z-10">
         <IconEl icon={icon} />

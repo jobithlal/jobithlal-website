@@ -1,33 +1,38 @@
 import type { Metadata } from "next";
 import { siteSettings } from "@/content/site";
+import { getSeoSettings } from "@/lib/content";
 
 const site = siteSettings;
 export type { SiteSettings } from "@/content/schema";
 
-export function pageMetadata({
-  title,
-  description,
-  path,
-  noindex = false,
-}: {
-  title?: string;
-  description: string;
-  path: string;
-  noindex?: boolean;
-}): Metadata {
+/**
+ * Metadata for a page: the admin's SEO overrides for `path` win, then the
+ * page's own defaults, then the site-wide defaults from the SEO manager.
+ */
+export async function seoMetadata(
+  path: string,
+  fallback: { title?: string; description: string; noindex?: boolean; ogImageUrl?: string },
+): Promise<Metadata> {
+  const seo = await getSeoSettings();
+  const o = seo.pages[path] ?? { noindex: false };
+  const title = o.title ?? fallback.title;
+  const description = o.description ?? fallback.description;
+  const image = o.ogImageUrl ?? fallback.ogImageUrl ?? seo.shareImageUrl ?? "/og";
+  const noindex = o.noindex || fallback.noindex || !seo.allowIndexing;
   return {
-    title,
+    ...(title ? { title } : {}),
     description,
     alternates: { canonical: path },
     openGraph: {
-      title: title ? `${title} | ${site.name}` : site.name,
-      description,
+      title: o.ogTitle ?? (title ? `${title} | ${seo.siteName}` : seo.defaultTitle),
+      description: o.ogDescription ?? description,
       url: path,
-      siteName: site.name,
+      siteName: seo.siteName,
       type: "website",
       locale: "en_US",
+      images: [{ url: image, width: 1200, height: 630, alt: title ?? seo.siteName }],
     },
-    twitter: { card: "summary_large_image", title: title ?? site.name, description },
+    twitter: { card: "summary_large_image", title: o.ogTitle ?? title ?? seo.defaultTitle, description: o.ogDescription ?? description, images: [image] },
     robots: noindex ? { index: false, follow: true } : undefined,
   };
 }

@@ -5,6 +5,7 @@ import { requirePage } from "@/lib/auth/session";
 import { requireDb } from "@/lib/db";
 import { emailConfigured } from "@/lib/email";
 import { can } from "@/lib/auth/permissions";
+import { getAnalyticsSettings } from "@/lib/content";
 
 export const metadata: Metadata = { title: "Overview" };
 
@@ -13,6 +14,7 @@ const fmt = new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "
 export default async function Overview() {
   const user = await requirePage("dashboard:view");
   const db = requireDb();
+  const analytics = await getAnalyticsSettings();
   const [published, drafts, demo, newInquiries, totalInquiries, recent] = await Promise.all([
     db.project.count({ where: { status: "PUBLISHED", isDemo: false } }),
     db.project.count({ where: { status: "DRAFT" } }),
@@ -101,7 +103,12 @@ export default async function Overview() {
           </h2>
           <StatusRow icon={Database} label="Database" ok detail="Connected" />
           <StatusRow icon={Mail} label="Email notifications" ok={emailConfigured()} detail={emailConfigured() ? "Resend configured" : "Add RESEND_API_KEY and CONTACT_FROM_EMAIL"} />
-          <StatusRow icon={BarChart3} label="Analytics" ok={false} detail="Not connected — GA4 setup arrives in Phase 7. No figures are shown until then." />
+          <StatusRow
+            icon={BarChart3}
+            label="Analytics"
+            ok={analytics.enabled && Boolean(analytics.ga4MeasurementId)}
+            detail={analytics.enabled && analytics.ga4MeasurementId ? `GA4 ${analytics.ga4MeasurementId} tracking` : "Off — set it up under Analytics"}
+          />
           <Link href="/" target="_blank" className="inline-block pt-2 text-sm text-accent underline-offset-4 hover:underline">
             Preview website ↗
           </Link>

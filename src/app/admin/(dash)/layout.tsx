@@ -11,6 +11,8 @@ const NAV_PERMS: [NavKey, Permission][] = [
   ["portfolio", "portfolio:view"],
   ["media", "media:view"],
   ["inquiries", "inquiries:view"],
+  ["seo", "settings:view"],
+  ["analytics", "analytics:view"],
   ["settings", "settings:view"],
   ["users", "users:manage"],
   ["audit", "audit:view"],
