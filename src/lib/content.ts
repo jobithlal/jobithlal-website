@@ -5,6 +5,8 @@ import type { Prisma } from "@/generated/prisma/client";
 import { siteSettings as seedSite, hero as seedHero, ticker as seedTicker, home as seedHome } from "@/content/site";
 import { services as seedServices } from "@/content/services";
 import { projects as seedProjects } from "@/content/projects";
+import { categoryForService, inquiryValueForService } from "@/content/service-map";
+import { serviceOptions as legacyServiceOptions } from "@/lib/contact-schema";
 import {
   heroSchema,
   homeSchema,
@@ -20,7 +22,6 @@ import {
   type Media,
   type Project,
   type Service,
-  type ServiceSlug,
   type SiteSettings,
 } from "@/content/schema";
 
@@ -215,6 +216,7 @@ export function toProject(p: ProjectRow): Project {
     slug: p.slug,
     title: p.title,
     category: p.category.slug,
+    categoryLabel: p.category.label,
     client: p.client ?? undefined,
     hideClient: p.hideClient,
     year: p.projectDate?.getFullYear(),
@@ -271,14 +273,25 @@ export async function getProject(slug: string) {
   return (await getProjects()).find((p) => p.slug === slug) ?? null;
 }
 
-const serviceToCategory: Record<ServiceSlug, Project["category"]> = {
-  "social-media-reels": "reels",
-  "motion-graphics": "motion",
-  "website-development": "websites",
-};
+export async function getProjectsForService(slug: string) {
+  const category = categoryForService(slug);
+  return (await getProjects()).filter((p) => p.category === category);
+}
 
-export async function getProjectsForService(slug: ServiceSlug) {
-  return (await getProjects()).filter((p) => p.category === serviceToCategory[slug]);
+/** Contact-form choices: one per enabled service, plus "Multiple services". */
+export async function getServiceOptions() {
+  const list = (await getServices()).map((s) => ({ value: inquiryValueForService(s.slug), label: s.title }));
+  return [...list, { value: "multiple", label: "Multiple Services" }];
+}
+
+/** Labels for every inquiry service value ever used (incl. disabled or deleted services). Admin only. */
+export async function getServiceLabels(): Promise<Record<string, string>> {
+  const labels: Record<string, string> = Object.fromEntries(legacyServiceOptions.map((o) => [o.value, o.label]));
+  if (db) {
+    const rows = await db.service.findMany({ select: { slug: true, title: true }, orderBy: { order: "asc" } }).catch(() => []);
+    for (const r of rows) labels[inquiryValueForService(r.slug)] = r.title;
+  }
+  return labels;
 }
 
 // ─────────────────────────── SEO & analytics ───────────────────────────

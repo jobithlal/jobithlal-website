@@ -1,12 +1,12 @@
 "use server";
 
 import { headers } from "next/headers";
-import { inquirySchema, serviceOptions, type ContactState, type Inquiry } from "@/lib/contact-schema";
+import { inquirySchema, type ContactState, type Inquiry } from "@/lib/contact-schema";
 import { sendEmail, emailConfigured, escapeHtml, getEmailConfig } from "@/lib/email";
 import { rateLimit } from "@/lib/rate-limit";
 import { db } from "@/lib/db";
 import { hashIp } from "@/lib/auth/tokens";
-import { getSiteSettings } from "@/lib/content";
+import { getServiceOptions, getSiteSettings } from "@/lib/content";
 import { whatsappLink } from "@/lib/utils";
 
 const MIN_FILL_MS = 3000;
@@ -15,8 +15,8 @@ const recentKeys = new Map<string, ContactState>();
 const SUCCESS: ContactState = { status: "success", message: "Thanks — your message has been sent. I'll be in touch soon." };
 
 async function fallbackLinks(data: Partial<Inquiry>) {
-  const site = await getSiteSettings();
-  const service = serviceOptions.find((s) => s.value === data.service)?.label ?? "";
+  const [site, options] = await Promise.all([getSiteSettings(), getServiceOptions()]);
+  const service = options.find((s) => s.value === data.service)?.label ?? "";
   const body = [
     `Name: ${data.name ?? ""}`,
     data.company ? `Company: ${data.company}` : "",
@@ -68,7 +68,9 @@ export async function submitInquiry(_prev: ContactState, formData: FormData): Pr
     return { status: "invalid", message: "Please check the highlighted fields.", fieldErrors: parsed.error.flatten().fieldErrors };
   }
   const data = parsed.data;
-  const serviceLabel = serviceOptions.find((s) => s.value === data.service)!.label;
+  // Only services currently offered on the site are accepted.
+  const serviceLabel = (await getServiceOptions()).find((s) => s.value === data.service)?.label;
+  if (!serviceLabel) return { status: "invalid", message: "Please check the highlighted fields.", fieldErrors: { service: ["Please choose a service."] } };
 
   // 1. Save first, so an email failure never loses the inquiry.
   let inquiryId: string | null = null;

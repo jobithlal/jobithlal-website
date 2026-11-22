@@ -72,7 +72,9 @@ async function main() {
     });
   }
 
-  for (const s of services) {
+  // Services and categories are seeded once; after that the admin owns them (deleted ones stay deleted).
+  const firstRun = (await db.service.count()) === 0;
+  for (const s of firstRun ? services : []) {
     await db.service.upsert({
       where: { slug: s.slug },
       create: {
@@ -96,15 +98,17 @@ async function main() {
   }
 
   const cats = new Map<string, string>();
-  for (const [order, [slug, label]] of Object.entries(categoryLabels).entries()) {
-    const c = await db.projectCategory.upsert({ where: { slug }, create: { slug, label, order }, update: {} });
-    cats.set(slug, c.id);
+  if (firstRun || (await db.projectCategory.count()) === 0) {
+    for (const [order, [slug, label]] of Object.entries(categoryLabels).entries()) {
+      await db.projectCategory.upsert({ where: { slug }, create: { slug, label, order }, update: {} });
+    }
   }
+  for (const c of await db.projectCategory.findMany()) cats.set(c.slug, c.id);
 
   // Sample-layout projects (clearly flagged). Never created once real projects exist.
   const realCount = await db.project.count({ where: { isDemo: false } });
   if (realCount === 0) {
-    for (const p of projects.filter((x) => x.isDemo)) {
+    for (const p of projects.filter((x) => x.isDemo && cats.has(x.category))) {
       await db.project.upsert({
         where: { slug: p.slug },
         create: {

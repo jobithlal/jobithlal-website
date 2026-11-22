@@ -4,12 +4,11 @@ import Link from "next/link";
 import { useState } from "react";
 import { ArrowUpRight, Play } from "lucide-react";
 import type { Project } from "@/content/schema";
-import { categoryLabels } from "@/content/projects";
+import { categoryLabelOf } from "@/content/projects";
+import { artFor, isVideoCategory } from "@/content/service-map";
 import { MediaFrame } from "@/components/media/MediaFrame";
-import type { ArtVariant } from "@/components/media/Artwork";
 import { cn } from "@/lib/utils";
 
-const art: Record<Project["category"], ArtVariant> = { reels: "reels", motion: "motion", websites: "websites" };
 
 export function DemoBadge({ className }: { className?: string }) {
   return (
@@ -26,7 +25,7 @@ export function DemoBadge({ className }: { className?: string }) {
 
 export function ProjectCard({ project, className, aspect = "aspect-[4/5]" }: { project: Project; className?: string; aspect?: string }) {
   const [hover, setHover] = useState(false);
-  const isVideo = project.category !== "websites" || !!project.cover.videoUrl || !!project.externalVideoUrl;
+  const isVideo = (project.isDemo && isVideoCategory(project.category)) || !!project.cover.videoUrl || !!project.externalVideoUrl;
   const client = project.client && !project.hideClient ? project.client : null;
 
   return (
@@ -43,12 +42,12 @@ export function ProjectCard({ project, className, aspect = "aspect-[4/5]" }: { p
     >
       <div className={cn("relative overflow-hidden rounded-[var(--radius-card)] border border-line bg-card transition-colors duration-500 group-hover:border-accent/60", aspect)}>
         <div className="absolute inset-0 transition-transform duration-[1.2s] ease-[var(--ease-out)] group-hover:scale-[1.07]">
-          <MediaFrame media={project.cover} art={art[project.category]} sizes="(min-width:1024px) 30vw, 85vw" playOnHover hovered={hover} />
+          <MediaFrame media={project.cover} art={artFor(project.category)} sizes="(min-width:1024px) 30vw, 85vw" playOnHover hovered={hover} />
         </div>
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80 transition-opacity duration-500 group-hover:opacity-100" />
         <div className="absolute left-4 right-[4.25rem] top-4 flex flex-wrap gap-2">
           <span className="rounded-full bg-black/60 px-3 py-1 text-[0.62rem] font-semibold uppercase tracking-[0.18em] text-fg backdrop-blur">
-            {categoryLabels[project.category]}
+            {categoryLabelOf(project)}
           </span>
           {project.isDemo && <DemoBadge />}
         </div>

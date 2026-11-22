@@ -4,19 +4,24 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import type { Project, ProjectCategory } from "@/content/schema";
-import { categoryLabels } from "@/content/projects";
+import { categoryLabelOf } from "@/content/projects";
 import { ProjectCard } from "./ProjectCard";
 import { cn } from "@/lib/utils";
 
 type Filter = "all" | ProjectCategory;
-const filters: { id: Filter; label: string }[] = [
-  { id: "all", label: "All projects" },
-  { id: "reels", label: categoryLabels.reels },
-  { id: "motion", label: categoryLabels.motion },
-  { id: "websites", label: categoryLabels.websites },
-];
+type FilterDef = { id: Filter; label: string };
 
-export function CategoryFilter({ value, onChange, counts }: { value: Filter; onChange: (f: Filter) => void; counts: Record<Filter, number> }) {
+export function CategoryFilter({
+  value,
+  onChange,
+  counts,
+  filters,
+}: {
+  value: Filter;
+  onChange: (f: Filter) => void;
+  counts: Record<string, number>;
+  filters: FilterDef[];
+}) {
   return (
     <div role="group" aria-label="Filter projects by category" className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none]">
       {filters.map((f) => (
@@ -34,7 +39,7 @@ export function CategoryFilter({ value, onChange, counts }: { value: Filter; onC
             <motion.span layoutId="filter-pill" className="absolute inset-0 rounded-full bg-accent" transition={{ type: "spring", stiffness: 400, damping: 34 }} />
           )}
           <span className="relative">
-            {f.label} <span className="opacity-60">({counts[f.id]})</span>
+            {f.label} <span className="opacity-60">({counts[f.id] ?? 0})</span>
           </span>
         </button>
       ))}
@@ -42,20 +47,28 @@ export function CategoryFilter({ value, onChange, counts }: { value: Filter; onC
   );
 }
 
+/** Filters come from the projects themselves, so categories added in the admin appear automatically. */
 export function useFilteredProjects(projects: Project[]) {
   const [filter, setFilter] = useState<Filter>("all");
-  const counts = useMemo(() => {
-    const c = { all: projects.length, reels: 0, motion: 0, websites: 0 } as Record<Filter, number>;
-    projects.forEach((p) => c[p.category]++);
-    return c;
+  const { counts, filters } = useMemo(() => {
+    const c: Record<string, number> = { all: projects.length };
+    const defs: FilterDef[] = [{ id: "all", label: "All projects" }];
+    for (const p of projects) {
+      if (!(p.category in c)) {
+        c[p.category] = 0;
+        defs.push({ id: p.category, label: categoryLabelOf(p) });
+      }
+      c[p.category]++;
+    }
+    return { counts: c, filters: defs };
   }, [projects]);
   const list = filter === "all" ? projects : projects.filter((p) => p.category === filter);
-  return { filter, setFilter, counts, list };
+  return { filter, setFilter, counts, filters, list };
 }
 
 /** Horizontal, scroll-snapped project slider (desktop) — swipeable on touch. */
 export function WorkSlider({ projects }: { projects: Project[] }) {
-  const { filter, setFilter, counts, list } = useFilteredProjects(projects);
+  const { filter, setFilter, counts, filters, list } = useFilteredProjects(projects);
   const track = useRef<HTMLUListElement>(null);
   const [edges, setEdges] = useState({ start: true, end: false });
 
@@ -81,7 +94,7 @@ export function WorkSlider({ projects }: { projects: Project[] }) {
   return (
     <div>
       <div className="container-x flex flex-col justify-between gap-6 md:flex-row md:items-center">
-        <CategoryFilter value={filter} onChange={setFilter} counts={counts} />
+        <CategoryFilter value={filter} onChange={setFilter} counts={counts} filters={filters} />
         <div className="hidden gap-2 md:flex">
           <SliderButton label="Previous projects" disabled={edges.start} onClick={() => scrollBy(-1)}>
             <ArrowLeft className="size-5" />

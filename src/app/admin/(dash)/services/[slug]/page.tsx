@@ -7,6 +7,7 @@ import { storageConfigured } from "@/lib/media";
 import { PageHeader } from "@/components/admin/kit";
 import type { PickedMedia } from "@/components/admin/MediaPicker";
 import { ServiceForm } from "./ServiceForm";
+import { DeleteServiceButton } from "../ServicesClient";
 
 export const metadata: Metadata = { title: "Edit service" };
 
@@ -25,10 +26,15 @@ export default async function EditService({ params }: PageProps<"/admin/services
         back={{ href: "/admin/services", label: "Services" }}
         title={s.title}
         description={
-          <a href={`/services/${s.slug}`} target="_blank" rel="noopener" className="text-accent hover:underline">
-            View /services/{s.slug} ↗
-          </a>
+          s.enabled ? (
+            <a href={`/services/${s.slug}`} target="_blank" rel="noopener" className="text-accent hover:underline">
+              View /services/{s.slug} ↗
+            </a>
+          ) : (
+            <span>Off — not on the website yet. Write the content, then switch “Enabled” on.</span>
+          )
         }
+        actions={can(user.role, "content:publish") ? <DeleteServiceButton slug={s.slug} title={s.title} afterDelete="/admin/services" /> : undefined}
       />
       <ServiceForm
         slug={s.slug}

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { requirePage } from "@/lib/auth/session";
 import { can } from "@/lib/auth/permissions";
 import { requireDb } from "@/lib/db";
-import { getAnalyticsSettings } from "@/lib/content";
+import { getAnalyticsSettings, getServiceLabels } from "@/lib/content";
 import { ga4ReportingConfigured, getGa4Summary, type Ga4Summary } from "@/lib/ga4";
 import { Badge, Card, EmptyState, PageHeader } from "@/components/admin/kit";
 import { AnalyticsForm } from "./AnalyticsForm";
@@ -141,6 +141,7 @@ export default async function AnalyticsPage() {
     db.inquiry.groupBy({ by: ["sourcePage"], where: { createdAt: { gte: since90 } }, _count: { _all: true }, orderBy: { _count: { sourcePage: "desc" } }, take: 8 }),
     db.inquiry.count(),
   ]);
+  const serviceLabels = await getServiceLabels();
   const won = await db.inquiry.count({ where: { createdAt: { gte: since90 }, status: "WON" } });
   const reporting = ga4ReportingConfigured();
   const live = settings.enabled && Boolean(settings.ga4MeasurementId);
@@ -171,7 +172,7 @@ export default async function AnalyticsPage() {
           ) : (
             <div className="grid gap-6 lg:grid-cols-2">
               <Card title="By service (90 days)">
-                <Bars rows={byService.map((r) => ({ label: r.service, value: r._count._all }))} empty="No enquiries in the last 90 days." />
+                <Bars rows={byService.map((r) => ({ label: serviceLabels[r.service] ?? r.service, value: r._count._all }))} empty="No enquiries in the last 90 days." />
               </Card>
               <Card title="Submitted from (90 days)">
                 <Bars rows={bySource.map((r) => ({ label: r.sourcePage || "Unknown page", value: r._count._all }))} empty="No enquiries in the last 90 days." />

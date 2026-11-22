@@ -8,17 +8,11 @@ import { ButtonLink } from "@/components/ui/Button";
 import { Eyebrow } from "@/components/ui/Section";
 import { MaskLines, Reveal } from "@/components/ui/Reveal";
 import { Faq } from "@/components/ui/Faq";
-import { Artwork, type ArtVariant } from "@/components/media/Artwork";
+import { Artwork } from "@/components/media/Artwork";
+import { artFor } from "@/content/service-map";
 import { ProjectCard } from "@/components/work/ProjectCard";
 import { ServiceCard } from "@/components/sections/ServiceCard";
 import { FinalCta } from "@/components/sections/FinalCta";
-import type { ServiceSlug } from "@/content/schema";
-
-const art: Record<ServiceSlug, ArtVariant> = {
-  "social-media-reels": "reels",
-  "motion-graphics": "motion",
-  "website-development": "websites",
-};
 
 export async function generateStaticParams() {
   return (await getServices()).map((s) => ({ slug: s.slug }));
@@ -67,7 +61,7 @@ export default async function ServicePage({ params }: PageProps<"/services/[slug
         }
         visual={
           <div className="relative aspect-[4/5] overflow-hidden rounded-[var(--radius-card)] border border-line sm:aspect-square lg:aspect-[4/5]">
-            <Artwork variant={art[service.slug]} />
+            <Artwork variant={artFor(service.slug)} />
           </div>
         }
       />

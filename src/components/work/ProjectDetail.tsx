@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { categoryLabels } from "@/content/projects";
+import { categoryLabelOf } from "@/content/projects";
+import { artFor } from "@/content/service-map";
 import type { HomeContent, Project } from "@/content/schema";
 import { breadcrumbJsonLd, JsonLd } from "@/lib/seo";
 import { PageHero } from "@/components/ui/PageHero";
@@ -9,9 +10,7 @@ import { Reveal } from "@/components/ui/Reveal";
 import { MediaFrame } from "@/components/media/MediaFrame";
 import { DemoBadge } from "@/components/work/ProjectCard";
 import { FinalCta } from "@/components/sections/FinalCta";
-import type { ArtVariant } from "@/components/media/Artwork";
 
-const art: Record<string, ArtVariant> = { reels: "reels", motion: "motion", websites: "websites" };
 
 /** Turns YouTube/Vimeo page URLs into privacy-friendly embed URLs. */
 function embedUrl(url: string) {
@@ -32,7 +31,7 @@ export function ProjectDetail({ project, next, finalCta }: { project: Project; n
   const embed = project.externalVideoUrl ? embedUrl(project.externalVideoUrl) : null;
 
   const facts = [
-    { k: "Category", v: categoryLabels[project.category] },
+    { k: "Category", v: categoryLabelOf(project) },
     client ? { k: "Client", v: client } : null,
     project.year ? { k: "Year", v: String(project.year) } : null,
   ].filter(Boolean) as { k: string; v: string }[];
@@ -55,7 +54,7 @@ export function ProjectDetail({ project, next, finalCta }: { project: Project; n
       />
       <PageHero
         crumbs={[{ name: "Home", href: "/" }, { name: "Work", href: "/work" }, { name: project.title }]}
-        eyebrow={categoryLabels[project.category]}
+        eyebrow={categoryLabelOf(project)}
         lines={[project.title]}
         lead={project.summary}
       />
@@ -79,7 +78,7 @@ export function ProjectDetail({ project, next, finalCta }: { project: Project; n
                 loading="lazy"
               />
             ) : (
-              <MediaFrame media={project.cover} art={art[project.category]} priority />
+              <MediaFrame media={project.cover} art={artFor(project.category)} priority />
             )}
           </div>
         </Reveal>
@@ -124,7 +123,7 @@ export function ProjectDetail({ project, next, finalCta }: { project: Project; n
             {project.gallery.map((m, i) => (
               <Reveal as="li" key={i} className={i % 3 === 0 ? "sm:col-span-2" : undefined}>
                 <div className="relative aspect-video overflow-hidden rounded-[var(--radius-card)] border border-line">
-                  <MediaFrame media={m} art={art[project.category]} sizes="(min-width:640px) 50vw, 100vw" />
+                  <MediaFrame media={m} art={artFor(project.category)} sizes="(min-width:640px) 50vw, 100vw" />
                 </div>
               </Reveal>
             ))}

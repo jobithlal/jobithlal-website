@@ -6,10 +6,10 @@ import { ProjectCard } from "./ProjectCard";
 import { CategoryFilter, useFilteredProjects } from "./WorkSlider";
 
 export function WorkGrid({ projects }: { projects: Project[] }) {
-  const { filter, setFilter, counts, list } = useFilteredProjects(projects);
+  const { filter, setFilter, counts, filters, list } = useFilteredProjects(projects);
   return (
     <div>
-      <CategoryFilter value={filter} onChange={setFilter} counts={counts} />
+      <CategoryFilter value={filter} onChange={setFilter} counts={counts} filters={filters} />
       <p className="sr-only" aria-live="polite">
         {list.length} project{list.length === 1 ? "" : "s"} shown
       </p>

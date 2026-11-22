@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { SERVICE_ICON_VALUES } from "./service-map";
 
 /**
  * Structured content models.
@@ -78,11 +79,12 @@ export const tickerSchema = z.object({
 });
 export type TickerContent = z.infer<typeof tickerSchema>;
 
-export const serviceSlugSchema = z.enum([
-  "social-media-reels",
-  "motion-graphics",
-  "website-development",
-]);
+export const serviceSlugSchema = z
+  .string()
+  .trim()
+  .min(2)
+  .max(60)
+  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Use lowercase letters, numbers and hyphens.");
 export type ServiceSlug = z.infer<typeof serviceSlugSchema>;
 
 export const faqSchema = z.object({ q: z.string(), a: z.string() });
@@ -96,7 +98,7 @@ export const serviceSchema = z.object({
   shortTitle: req(60),
   subtitle: req(120),
   description: req(600),
-  icon: z.enum(["clapperboard", "sparkles", "code"]),
+  icon: z.enum(SERVICE_ICON_VALUES),
   media: mediaSchema,
   page: z.object({
     eyebrow: req(80),
@@ -113,13 +115,15 @@ export const serviceSchema = z.object({
 });
 export type Service = z.infer<typeof serviceSchema>;
 
-export const projectCategorySchema = z.enum(["reels", "motion", "websites"]);
+export const projectCategorySchema = z.string().min(1).max(60);
 export type ProjectCategory = z.infer<typeof projectCategorySchema>;
 
 export const projectSchema = z.object({
   slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
   title: z.string(),
   category: projectCategorySchema,
+  /** Display name of the category (from the database); seed content falls back to categoryLabels. */
+  categoryLabel: z.string().optional(),
   client: z.string().optional(),
   hideClient: z.boolean().default(false),
   year: z.number().int().optional(),

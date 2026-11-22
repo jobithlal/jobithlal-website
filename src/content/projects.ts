@@ -6,6 +6,9 @@ export const categoryLabels: Record<ProjectCategory, string> = {
   websites: "Websites",
 };
 
+/** Category name for display — database label first, then the built-in names. */
+export const categoryLabelOf = (p: Pick<Project, "category" | "categoryLabel">) => p.categoryLabel ?? categoryLabels[p.category] ?? p.category;
+
 /**
  * No real projects have been supplied yet.
  *

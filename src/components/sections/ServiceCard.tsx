@@ -2,22 +2,33 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { ArrowUpRight, Clapperboard, Sparkles, CodeXml } from "lucide-react";
+import { ArrowUpRight, Box, Brush, Camera, Clapperboard, CodeXml, Film, Image, LayoutTemplate, Megaphone, Palette, PenTool, Sparkles, UserRound, Video, WandSparkles } from "lucide-react";
 import type { Service } from "@/content/schema";
 import { MediaFrame } from "@/components/media/MediaFrame";
-import type { ArtVariant } from "@/components/media/Artwork";
+import { artFor, type ServiceIcon } from "@/content/service-map";
 import { cn } from "@/lib/utils";
 
-const icons = { clapperboard: Clapperboard, sparkles: Sparkles, code: CodeXml };
-const art: Record<Service["slug"], ArtVariant> = {
-  "social-media-reels": "reels",
-  "motion-graphics": "motion",
-  "website-development": "websites",
+const icons: Record<ServiceIcon, typeof Sparkles> = {
+  clapperboard: Clapperboard,
+  sparkles: Sparkles,
+  code: CodeXml,
+  camera: Camera,
+  video: Video,
+  film: Film,
+  image: Image,
+  palette: Palette,
+  "pen-tool": PenTool,
+  brush: Brush,
+  user: UserRound,
+  layout: LayoutTemplate,
+  megaphone: Megaphone,
+  box: Box,
+  wand: WandSparkles,
 };
 
 export function ServiceCard({ service, index, className }: { service: Service; index: number; className?: string }) {
   const [hover, setHover] = useState(false);
-  const Icon = icons[service.icon];
+  const Icon = icons[service.icon] ?? Sparkles;
   return (
     <Link
       href={`/services/${service.slug}`}
@@ -34,7 +45,7 @@ export function ServiceCard({ service, index, className }: { service: Service; i
     >
       <div className="relative h-[58%] min-h-60 overflow-hidden">
         <div className="absolute inset-0 transition-transform duration-[1.2s] ease-[var(--ease-out)] group-hover:scale-[1.06]">
-          <MediaFrame media={service.media} art={art[service.slug]} sizes="(min-width:1024px) 30vw, 100vw" playOnHover hovered={hover} />
+          <MediaFrame media={service.media} art={artFor(service.slug)} sizes="(min-width:1024px) 30vw, 100vw" playOnHover hovered={hover} />
         </div>
         <div className="absolute inset-0 bg-gradient-to-t from-card via-card/20 to-transparent transition-opacity duration-500 group-hover:opacity-70" />
         <span className="absolute left-5 top-5 font-display text-sm font-bold text-fg/70">0{index + 1}</span>

@@ -3,6 +3,7 @@ import type { HomeContent, SiteSettings } from "@/content/schema";
 import { Eyebrow } from "@/components/ui/Section";
 import { MaskLines, Reveal } from "@/components/ui/Reveal";
 import { ContactForm } from "@/components/contact/ContactForm";
+import { getServiceOptions } from "@/lib/content";
 import { formatPhone, whatsappLink } from "@/lib/utils";
 
 export function ContactDetails({ site }: { site: SiteSettings }) {
@@ -43,8 +44,9 @@ export function ContactDetails({ site }: { site: SiteSettings }) {
   );
 }
 
-export function Contact({ content, site, headingLevel = "h2" }: { content: HomeContent["contact"]; site: SiteSettings; headingLevel?: "h1" | "h2" }) {
+export async function Contact({ content, site, headingLevel = "h2" }: { content: HomeContent["contact"]; site: SiteSettings; headingLevel?: "h1" | "h2" }) {
   const H = headingLevel;
+  const serviceOptions = await getServiceOptions();
   return (
     <section id="contact" aria-labelledby="contact-heading" className="section-y relative">
       <div className="container-x grid gap-14 lg:grid-cols-12 lg:gap-16">
@@ -64,7 +66,7 @@ export function Contact({ content, site, headingLevel = "h2" }: { content: HomeC
         </div>
         <Reveal delay={0.1} className="lg:col-span-7">
           <div className="rounded-[calc(var(--radius-card)+6px)] border border-line bg-card/40 p-5 sm:p-8 lg:p-10">
-            <ContactForm />
+            <ContactForm serviceOptions={serviceOptions} />
           </div>
         </Reveal>
       </div>

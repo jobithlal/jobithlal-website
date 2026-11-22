@@ -4,7 +4,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { can } from "@/lib/auth/permissions";
 import { requireDb } from "@/lib/db";
 import { audit } from "@/lib/audit";
-import { serviceOptions } from "@/lib/contact-schema";
+import { getServiceLabels } from "@/lib/content";
 
 /** Escape for CSV, and neutralise spreadsheet formula injection (=, +, -, @). */
 function cell(v: unknown) {
@@ -27,7 +27,8 @@ export async function GET(req: NextRequest) {
     ...(q ? { OR: ["name", "email", "company", "details"].map((f) => ({ [f]: { contains: q, mode: "insensitive" } })) } : {}),
   };
   const rows = await requireDb().inquiry.findMany({ where, orderBy: { createdAt: "desc" }, take: 10_000 });
-  const svc = (v: string) => serviceOptions.find((o) => o.value === v)?.label ?? v;
+  const labels = await getServiceLabels();
+  const svc = (v: string) => labels[v] ?? v;
   const header = ["Date", "Name", "Email", "Company", "Phone", "Service", "Budget", "Timeline", "Status", "Source page", "Email delivery", "Details"];
   const lines = rows.map((r) =>
     [r.createdAt, r.name, r.email, r.company, r.phone, svc(r.service), r.budget, r.timeline, r.status, r.sourcePage, r.adminEmailStatus, r.details].map(cell).join(","),

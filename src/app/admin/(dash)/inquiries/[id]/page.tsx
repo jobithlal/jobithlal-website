@@ -4,7 +4,7 @@ import { Mail, MessageCircle, Phone } from "lucide-react";
 import { requirePage } from "@/lib/auth/session";
 import { can } from "@/lib/auth/permissions";
 import { requireDb } from "@/lib/db";
-import { serviceOptions } from "@/lib/contact-schema";
+import { getServiceLabels } from "@/lib/content";
 import { whatsappLink } from "@/lib/utils";
 import { Badge, Card, PageHeader } from "@/components/admin/kit";
 import { dateFmt } from "@/lib/admin/format";
@@ -28,7 +28,7 @@ export default async function InquiryPage({ params }: PageProps<"/admin/inquirie
     await db.inquiry.update({ where: { id }, data: { readAt: new Date() } });
   }
   const manage = can(user.role, "inquiries:manage");
-  const svc = serviceOptions.find((o) => o.value === inq.service)?.label ?? inq.service;
+  const svc = (await getServiceLabels())[inq.service] ?? inq.service;
   const facts: [string, string | null][] = [
     ["Service", svc],
     ["Company", inq.company],

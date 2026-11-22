@@ -5,30 +5,29 @@ import { AnimatePresence, motion } from "motion/react";
 import { CheckCircle2, Loader2, Mail, MessageCircle, AlertTriangle } from "lucide-react";
 import { submitInquiry } from "@/app/actions/contact";
 import { track } from "@/components/analytics/Analytics";
-import { budgetOptions, serviceOptions, timelineOptions, type ContactState } from "@/lib/contact-schema";
+import { budgetOptions, timelineOptions, type ContactState } from "@/lib/contact-schema";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 
 const initial: ContactState = { status: "idle" };
 
 const subscribeNoop = () => () => {};
-function readServiceParam() {
-  const svc = new URLSearchParams(window.location.search).get("service") ?? "";
-  return serviceOptions.some((o) => o.value === svc) ? svc : "";
-}
+type Option = { value: string; label: string };
+const readServiceParam = () => new URLSearchParams(window.location.search).get("service") ?? "";
 
 function newKey() {
   return typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : String(Math.random()).slice(2);
 }
 
-export function ContactForm() {
+export function ContactForm({ serviceOptions }: { serviceOptions: Option[] }) {
   const [state, action, pending] = useActionState(submitInquiry, initial);
   const formRef = useRef<HTMLFormElement>(null);
   const statusRef = useRef<HTMLDivElement>(null);
   const startedAt = useRef(0);
   const submissionKey = useRef("");
   // Pre-select the service from ?service=… (links on the service pages).
-  const defaultService = useSyncExternalStore(subscribeNoop, readServiceParam, () => "");
+  const requested = useSyncExternalStore(subscribeNoop, readServiceParam, () => "");
+  const defaultService = serviceOptions.some((o) => o.value === requested) ? requested : "";
 
   useEffect(() => {
     startedAt.current = Date.now();

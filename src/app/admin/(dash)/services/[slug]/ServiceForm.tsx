@@ -6,6 +6,7 @@ import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
 import { saveService } from "@/app/admin/actions/services";
 import { Btn, Card, Input, Select, Textarea, Toggle, useActionForm } from "@/components/admin/kit";
 import { MediaField, type PickedMedia } from "@/components/admin/MediaPicker";
+import { SERVICE_ICONS } from "@/content/service-map";
 
 type Row = Record<string, string>;
 type V = {
@@ -46,7 +47,7 @@ export function ServiceForm({ slug, v, canEdit, storageReady }: { slug: string; 
             <Input label="Title" name="title" defaultValue={v.title} errors={e.title} />
             <Input label="Short title" name="shortTitle" defaultValue={v.shortTitle} errors={e.shortTitle} hint="Used in the footer and filters." />
             <Input label="Subtitle" name="subtitle" defaultValue={v.subtitle} errors={e.subtitle} />
-            <Select label="Icon" name="icon" defaultValue={v.icon} options={[{ value: "clapperboard", label: "Clapperboard (reels)" }, { value: "sparkles", label: "Sparkles (motion)" }, { value: "code", label: "Code (websites)" }]} />
+            <Select label="Icon" name="icon" defaultValue={v.icon} options={SERVICE_ICONS.map((i) => ({ value: i.value, label: i.label }))} />
             <Textarea className="sm:col-span-2" label="Description" name="description" rows={3} defaultValue={v.description} errors={e.description} />
             <MediaField label="Card image" name="image" value={v.image} accept="IMAGE" storageReady={storageReady} />
             <MediaField label="Card video (plays on hover)" name="video" value={v.video} accept="VIDEO" storageReady={storageReady} />

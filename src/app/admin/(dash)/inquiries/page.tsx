@@ -5,7 +5,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { requirePage } from "@/lib/auth/session";
 import { can } from "@/lib/auth/permissions";
 import { requireDb } from "@/lib/db";
-import { serviceOptions } from "@/lib/contact-schema";
+import { getServiceLabels } from "@/lib/content";
 import { Badge, EmptyState, PageHeader } from "@/components/admin/kit";
 import { dateFmt } from "@/lib/admin/format";
 import { statusLabels, statusTone } from "./labels";
@@ -50,7 +50,8 @@ export default async function InquiriesPage({ searchParams }: PageProps<"/admin/
     db.inquiry.count({ where }),
   ]);
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const svc = (v: string) => serviceOptions.find((o) => o.value === v)?.label ?? v;
+  const labels = await getServiceLabels();
+  const svc = (v: string) => labels[v] ?? v;
   const qs = (extra: Record<string, string | number>) => {
     const p = new URLSearchParams({ ...(q && { q }), ...(status && { status }), ...(service && { service }), ...(unread && { unread: "1" }), sort });
     for (const [k, v] of Object.entries(extra)) p.set(k, String(v));
@@ -94,7 +95,7 @@ export default async function InquiriesPage({ searchParams }: PageProps<"/admin/
           <span className="sr-only">Service</span>
           <select name="service" defaultValue={service} className="h-10 w-full rounded-lg border border-line bg-bg-2 px-3 text-sm">
             <option value="">All services</option>
-            {serviceOptions.map((o) => (
+            {Object.entries(labels).map(([value, label]) => ({ value, label })).map((o) => (
               <option key={o.value} value={o.value}>
                 {o.label}
               </option>
