@@ -62,7 +62,7 @@ export async function saveEmailConnection(fd: FormData): Promise<ActionResult> {
 
     await db.emailSettings.upsert({
       where: { id: "default" },
-      create: { id: "default", data: parsed.data as Prisma.InputJsonValue, apiKeyEnc: seal(apiKey), apiKeyLast4: apiKey.slice(-4) },
+      create: { id: "default", data: parsed.data as Prisma.InputJsonValue, ...(newKey ? { apiKeyEnc: seal(newKey), apiKeyLast4: newKey.slice(-4) } : {}) },
       update: {
         data: parsed.data as Prisma.InputJsonValue,
         ...(newKey ? { apiKeyEnc: seal(newKey), apiKeyLast4: newKey.slice(-4) } : {}),
