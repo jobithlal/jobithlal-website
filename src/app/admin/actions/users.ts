@@ -28,7 +28,7 @@ export async function createUser(fd: FormData): Promise<ActionResult<{ tempPassw
     const created = await db.user.create({ data: { ...data, passwordHash: await hashPassword(temp) } });
     await audit("user.created", { userId: user.id, entity: "User", entityId: created.id, details: { role: data.role } });
 
-    if (emailConfigured()) {
+    if (await emailConfigured()) {
       const token = newToken();
       await db.passwordResetToken.create({ data: { tokenHash: hashToken(token), userId: created.id, expiresAt: new Date(Date.now() + 48 * 3600_000) } });
       const link = `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/admin/reset-password?token=${token}`;

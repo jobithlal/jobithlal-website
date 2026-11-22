@@ -105,6 +105,7 @@ and generate a fresh migration.
 ## Known limitations
 
 - SEO: Admin → SEO (Super Admin edits). Per-page titles/descriptions/share images, indexing switch, Google/Bing verification.
+- Email: Admin → Email. Paste a Resend API key (stored AES-256-GCM encrypted with a key derived from `AUTH_SECRET`), sender and recipient; shows domain status, a test-send and a delivery log. The `RESEND_API_KEY`/`CONTACT_*` env vars still work as a fallback.
 - Analytics: Admin → Analytics. Set the GA4 Measurement ID to enable tracking (consent banner by default). For traffic reports inside the dashboard, add `GA4_PROPERTY_ID`, `GA4_CLIENT_EMAIL`, `GA4_PRIVATE_KEY` (a service account with Viewer access on the property).
 - Design & appearance and backup/restore are still to come.
 - Services save straight to the live site (no separate draft step); the homepage and projects have full draft → preview → publish.

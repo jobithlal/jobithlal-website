@@ -1,8 +1,7 @@
 "use client";
 
-import { useTransition } from "react";
-import { saveEmailTemplate, saveGeneralSettings, saveSocialLinks, sendTestEmail } from "@/app/admin/actions/settings";
-import { Badge, Btn, Card, Input, Textarea, Toggle, useActionForm, useToast } from "@/components/admin/kit";
+import { saveGeneralSettings, saveSocialLinks } from "@/app/admin/actions/settings";
+import { Btn, Card, Input, Toggle, useActionForm } from "@/components/admin/kit";
 import { MediaField, type PickedMedia } from "@/components/admin/MediaPicker";
 import type { SiteSettings } from "@/content/schema";
 
@@ -64,76 +63,3 @@ export function SocialForm({ links, canEdit }: { links: { platform: string; url:
   );
 }
 
-export function EmailSettings({
-  configured,
-  recipient,
-  confirmation,
-  templates,
-  canEdit,
-}: {
-  configured: boolean;
-  recipient: string;
-  confirmation: boolean;
-  templates: { key: string; subject: string; body: string; enabled: boolean }[];
-  canEdit: boolean;
-}) {
-  const toast = useToast();
-  const [pending, start] = useTransition();
-  return (
-    <Card title="Email notifications">
-      <div className="mb-4 flex flex-wrap items-center gap-3 text-sm">
-        {configured ? <Badge tone="accent">Connected (Resend)</Badge> : <Badge tone="warn">Not connected</Badge>}
-        <span className="text-fg-2">
-          Inquiries go to <strong>{recipient}</strong>. Visitor confirmations are <strong>{confirmation ? "on" : "off"}</strong>.
-        </span>
-        {canEdit && (
-          <Btn
-            type="button"
-            pending={pending}
-            className="ml-auto"
-            onClick={() =>
-              start(async () => {
-                const r = await sendTestEmail();
-                toast({ tone: r.ok ? "success" : "error", text: r.ok ? (r.message ?? "") : r.error });
-              })
-            }
-          >
-            Send test email
-          </Btn>
-        )}
-      </div>
-      {!configured && (
-        <p className="mb-4 rounded-lg bg-bg-2 p-3 text-sm text-fg-2">
-          Inquiries are still saved here in the admin. To also get them by email, create a free <strong>Resend</strong> account, verify your domain, and add{" "}
-          <code>RESEND_API_KEY</code> and <code>CONTACT_FROM_EMAIL</code> in Vercel → Environment Variables (optionally <code>CONTACT_TO_EMAIL</code> and{" "}
-          <code>CONTACT_SEND_CONFIRMATION=true</code>), then redeploy.
-        </p>
-      )}
-      <div className="grid gap-4 lg:grid-cols-2">
-        {templates.map((t) => (
-          <TemplateForm key={t.key} t={t} canEdit={canEdit} />
-        ))}
-      </div>
-    </Card>
-  );
-}
-
-function TemplateForm({ t, canEdit }: { t: { key: string; subject: string; body: string; enabled: boolean }; canEdit: boolean }) {
-  const { formProps, pending, errors } = useActionForm(saveEmailTemplate.bind(null, t.key));
-  const title = t.key === "admin_inquiry" ? "New-inquiry notification (to you)" : "Visitor acknowledgement";
-  return (
-    <form {...formProps} className="space-y-3 rounded-lg bg-bg-2 p-4">
-      <p className="font-semibold">{title}</p>
-      <fieldset disabled={!canEdit} className="space-y-3">
-        <Input label="Subject" name="subject" defaultValue={t.subject} errors={errors.subject} />
-        <Textarea label="Message" name="body" rows={5} defaultValue={t.body} errors={errors.body} hint="Placeholders: {{name}} {{firstName}} {{email}} {{service}} {{details}}" />
-        <Toggle label="Enabled" name="enabled" defaultChecked={t.enabled} />
-      </fieldset>
-      {canEdit && (
-        <Btn type="submit" pending={pending}>
-          Save template
-        </Btn>
-      )}
-    </form>
-  );
-}

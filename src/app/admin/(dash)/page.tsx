@@ -15,6 +15,7 @@ export default async function Overview() {
   const user = await requirePage("dashboard:view");
   const db = requireDb();
   const analytics = await getAnalyticsSettings();
+  const emailOn = await emailConfigured();
   const [published, drafts, demo, newInquiries, totalInquiries, recent] = await Promise.all([
     db.project.count({ where: { status: "PUBLISHED", isDemo: false } }),
     db.project.count({ where: { status: "DRAFT" } }),
@@ -102,7 +103,7 @@ export default async function Overview() {
             Setup status
           </h2>
           <StatusRow icon={Database} label="Database" ok detail="Connected" />
-          <StatusRow icon={Mail} label="Email notifications" ok={emailConfigured()} detail={emailConfigured() ? "Resend configured" : "Add RESEND_API_KEY and CONTACT_FROM_EMAIL"} />
+          <StatusRow icon={Mail} label="Email notifications" ok={emailOn} detail={emailOn ? "Resend connected" : "Not connected — set it up under Email"} />
           <StatusRow
             icon={BarChart3}
             label="Analytics"

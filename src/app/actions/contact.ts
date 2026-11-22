@@ -2,7 +2,7 @@
 
 import { headers } from "next/headers";
 import { inquirySchema, serviceOptions, type ContactState, type Inquiry } from "@/lib/contact-schema";
-import { sendEmail, emailConfigured, escapeHtml } from "@/lib/email";
+import { sendEmail, emailConfigured, escapeHtml, getEmailConfig } from "@/lib/email";
 import { rateLimit } from "@/lib/rate-limit";
 import { db } from "@/lib/db";
 import { hashIp } from "@/lib/auth/tokens";
@@ -91,7 +91,7 @@ export async function submitInquiry(_prev: ContactState, formData: FormData): Pr
           sourcePage: data.sourcePage,
           submissionKey: key,
           ipHash: hashIp(ip),
-          adminEmailStatus: emailConfigured() ? "PENDING" : "NOT_CONFIGURED",
+          adminEmailStatus: (await emailConfigured()) ? "PENDING" : "NOT_CONFIGURED",
         },
       });
       inquiryId = row.id;
@@ -102,7 +102,7 @@ export async function submitInquiry(_prev: ContactState, formData: FormData): Pr
     }
   }
 
-  if (!emailConfigured()) {
+  if (!(await emailConfigured())) {
     if (inquiryId) return SUCCESS; // saved — visible in the admin inquiries list
     return {
       status: "unavailable",
@@ -113,6 +113,7 @@ export async function submitInquiry(_prev: ContactState, formData: FormData): Pr
 
   // 2. Notify the administrator.
   const site = await getSiteSettings();
+  const emailCfg = await getEmailConfig();
   const templates = db ? await db.emailTemplate.findMany({ where: { key: { in: ["admin_inquiry", "visitor_ack"] } } }) : [];
   const tpl = Object.fromEntries(templates.map((t) => [t.key, t]));
   const vars = { name: data.name, firstName: data.name.split(" ")[0], email: data.email, service: serviceLabel, details: data.details };
@@ -132,7 +133,7 @@ export async function submitInquiry(_prev: ContactState, formData: FormData): Pr
     .map(([k, v]) => `<tr><td style="padding:6px 12px 6px 0;color:#666">${k}</td><td style="padding:6px 0"><strong>${escapeHtml(v!)}</strong></td></tr>`)
     .join("");
   const admin = await sendEmail({
-    to: process.env.CONTACT_TO_EMAIL || site.email,
+    to: emailCfg.toEmail || site.email,
     replyTo: data.email,
     subject: render(tpl.admin_inquiry?.subject ?? "New inquiry: {{service}} — {{name}}", vars),
     html: `<h2>New project inquiry</h2><table>${table}</table><h3>Project details</h3><p style="white-space:pre-wrap">${escapeHtml(data.details)}</p>`,
@@ -141,7 +142,7 @@ export async function submitInquiry(_prev: ContactState, formData: FormData): Pr
 
   // 3. Optional visitor acknowledgement.
   let visitorStatus: "SENT" | "FAILED" | "SKIPPED" = "SKIPPED";
-  const ackEnabled = process.env.CONTACT_SEND_CONFIRMATION === "true" && (tpl.visitor_ack?.enabled ?? true);
+  const ackEnabled = emailCfg.sendConfirmation && (tpl.visitor_ack?.enabled ?? true);
   if (admin.ok && ackEnabled) {
     const body = render(tpl.visitor_ack?.body ?? "Hi {{firstName}},\n\nThanks for reaching out about {{service}}. I'll get back to you soon.\n\n— Jobith Lal", vars);
     const ack = await sendEmail({

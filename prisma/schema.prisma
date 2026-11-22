@@ -125,6 +125,16 @@ model AnalyticsSettings {
   updatedAt  DateTime @updatedAt
 }
 
+/// Resend connection set from the admin. The API key is AES-256-GCM encrypted
+/// with a key derived from AUTH_SECRET; only the last 4 characters are kept readable.
+model EmailSettings {
+  id          String   @id @default("default")
+  data        Json
+  apiKeyEnc   String?
+  apiKeyLast4 String?
+  updatedAt   DateTime @updatedAt
+}
+
 model EmailTemplate {
   id         String   @id @default(cuid())
   key        String   @unique // "admin_inquiry" | "visitor_ack"

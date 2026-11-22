@@ -7,7 +7,6 @@ import { requireDb } from "@/lib/db";
 import { audit } from "@/lib/audit";
 import { TAGS } from "@/lib/content";
 import { siteSettingsSchema } from "@/content/schema";
-import { emailConfigured, sendEmail, escapeHtml } from "@/lib/email";
 import { formObject, guarded, type ActionResult } from "@/lib/admin/action";
 import { fieldErrorsFrom } from "@/lib/admin/sections";
 
@@ -90,20 +89,5 @@ export async function saveEmailTemplate(key: string, fd: FormData): Promise<Acti
     await audit("settings.email_template", { userId: user.id, entity: "EmailTemplate", entityId: t.id, details: { key } });
     refresh();
     return { ok: true, message: "Email template saved." };
-  });
-}
-
-export async function sendTestEmail(): Promise<ActionResult> {
-  return guarded("settings:edit", async (user) => {
-    if (!emailConfigured()) return { ok: false, error: "Email isn't configured. Add RESEND_API_KEY and CONTACT_FROM_EMAIL in Vercel, then redeploy." };
-    const to = process.env.CONTACT_TO_EMAIL || user.email;
-    const r = await sendEmail({
-      to,
-      subject: "JOBITHLAL — test email",
-      text: `This is a test from your website admin, sent by ${user.name}. If you can read this, inquiry notifications will reach you.`,
-      html: `<p>This is a test from your website admin, sent by ${escapeHtml(user.name)}.</p><p>If you can read this, inquiry notifications will reach you.</p>`,
-    });
-    await audit("settings.email_test", { userId: user.id, details: { ok: r.ok } });
-    return r.ok ? { ok: true, message: `Test email sent to ${to}. Check the inbox (and spam).` } : { ok: false, error: `Delivery failed: ${r.error}` };
   });
 }

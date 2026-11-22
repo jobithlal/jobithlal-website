@@ -95,7 +95,7 @@ const emailOnly = z.object({ email: z.string().trim().toLowerCase().email().max(
 export async function requestPasswordReset(_prev: FormState, formData: FormData): Promise<FormState> {
   const done: FormState = { message: "If that email belongs to an admin account, a reset link is on its way. It expires in 1 hour." };
   if (!db) return { error: "The database isn't connected yet." };
-  if (!emailConfigured()) return { error: "Email isn't configured on this site, so reset links can't be sent. Ask a Super Admin to run `npm run admin:create` to set a new password." };
+  if (!(await emailConfigured())) return { error: "Email isn't configured on this site, so reset links can't be sent. Ask a Super Admin to run `npm run admin:create` to set a new password." };
   const parsed = emailOnly.safeParse({ email: formData.get("email") });
   if (!parsed.success) return { fieldErrors: { email: ["Enter a valid email address."] } };
   const { ip } = await clientInfo();

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { LayoutDashboard, LogOut, Menu, X, ExternalLink, FileText, Sparkles, FolderOpen, Image as ImageIcon, Inbox, Settings, Users, ScrollText, Search, BarChart3 } from "lucide-react";
+import { LayoutDashboard, LogOut, Menu, X, ExternalLink, FileText, Sparkles, FolderOpen, Image as ImageIcon, Inbox, Settings, Users, ScrollText, Search, BarChart3, Mail } from "lucide-react";
 import { Toaster } from "./kit";
 import { logout } from "@/app/admin/actions/auth";
 import { cn } from "@/lib/utils";
@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
  * Admin frame: sidebar (drawer on mobile) + top bar. The server decides which
  * modules this user may see; every page and action re-checks on the server.
  */
-export type NavKey = "overview" | "content" | "services" | "portfolio" | "media" | "inquiries" | "seo" | "analytics" | "settings" | "users" | "audit";
+export type NavKey = "overview" | "content" | "services" | "portfolio" | "media" | "inquiries" | "seo" | "analytics" | "email" | "settings" | "users" | "audit";
 const ALL_NAV: { key: NavKey; href: string; label: string; icon: typeof Inbox }[] = [
   { key: "overview", href: "/admin", label: "Overview", icon: LayoutDashboard },
   { key: "content", href: "/admin/content", label: "Website content", icon: FileText },
@@ -22,6 +22,7 @@ const ALL_NAV: { key: NavKey; href: string; label: string; icon: typeof Inbox }[
   { key: "inquiries", href: "/admin/inquiries", label: "Inquiries", icon: Inbox },
   { key: "seo", href: "/admin/seo", label: "SEO", icon: Search },
   { key: "analytics", href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
+  { key: "email", href: "/admin/email", label: "Email", icon: Mail },
   { key: "settings", href: "/admin/settings", label: "Settings", icon: Settings },
   { key: "users", href: "/admin/users", label: "Users & security", icon: Users },
   { key: "audit", href: "/admin/audit", label: "Activity log", icon: ScrollText },
