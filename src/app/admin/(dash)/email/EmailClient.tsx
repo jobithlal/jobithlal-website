@@ -18,6 +18,7 @@ export function ConnectionForm({ v, canEdit, defaultRecipient }: { v: Connection
   const { formProps, pending, errors: e } = useActionForm(saveEmailConnection, { trackDirty: true });
   const toast = useToast();
   const stored = v.source === "dashboard";
+  const fromVercel = v.source === "env";
   return (
     <Card title="Resend connection" description="Sends inquiry notifications, visitor confirmations, password resets and admin invitations.">
       <form {...formProps}>
@@ -28,7 +29,13 @@ export function ConnectionForm({ v, canEdit, defaultRecipient }: { v: Connection
             type="password"
             autoComplete="off"
             spellCheck={false}
-            placeholder={stored && v.apiKeyLast4 ? `Saved — ends in …${v.apiKeyLast4}. Leave empty to keep it.` : "re_…"}
+            placeholder={
+              stored && v.apiKeyLast4
+                ? `Saved — ends in …${v.apiKeyLast4}. Leave empty to keep it.`
+                : fromVercel
+                  ? `Provided by Vercel${v.apiKeyLast4 ? ` (…${v.apiKeyLast4})` : ""} — leave empty`
+                  : "re_…"
+            }
             errors={e.apiKey}
             hint={
               <>
@@ -55,7 +62,7 @@ export function ConnectionForm({ v, canEdit, defaultRecipient }: { v: Connection
           {canEdit && (
             <div className="flex flex-wrap items-center gap-3 pt-1">
               <Btn type="submit" pending={pending}>
-                {stored ? "Save changes" : "Connect Resend"}
+                {stored || (fromVercel && v.fromEmail) ? "Save changes" : "Connect Resend"}
               </Btn>
               {stored && (
                 <ConfirmButton

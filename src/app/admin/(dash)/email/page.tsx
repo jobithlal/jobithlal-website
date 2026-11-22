@@ -40,7 +40,7 @@ export default async function EmailPage() {
       <div className="space-y-6">
         <div className="flex flex-wrap items-center gap-2 text-sm">
           {connected && cfg.enabled ? <Badge tone="accent">Connected</Badge> : connected ? <Badge tone="warn">Paused</Badge> : <Badge tone="muted">Not connected</Badge>}
-          {cfg.source === "env" && <Badge tone="neutral">Using Vercel environment variables</Badge>}
+          {cfg.source === "env" && <Badge tone="neutral">API key from Vercel</Badge>}
           {connected && <span className="text-fg-2">Sending as <strong>{cfg.fromName ? `${cfg.fromName} <${cfg.fromEmail}>` : cfg.fromEmail}</strong> → inquiries to <strong>{cfg.toEmail || site.email}</strong></span>}
         </div>
 
@@ -49,14 +49,14 @@ export default async function EmailPage() {
             The stored API key can’t be decrypted — AUTH_SECRET was probably changed. Paste the key again below.
           </p>
         )}
-        {!secretBoxReady() && canEdit && (
+        {!secretBoxReady() && canEdit && cfg.source !== "env" && (
           <p className="rounded-lg border border-line bg-bg-2 p-3 text-sm text-fg-2">
             To store an API key here, the server needs an <code className="text-fg">AUTH_SECRET</code> environment variable (32+ random characters) in Vercel. Add it and redeploy.
           </p>
         )}
         {cfg.source === "env" && (
           <p className="rounded-lg bg-bg-2 p-3 text-sm text-fg-2">
-            Email currently runs from <code className="text-fg">RESEND_API_KEY</code> in Vercel. Saving a key here takes over, and you can then remove the environment variables.
+            The Resend API key comes from Vercel (<code className="text-fg">RESEND_API_KEY</code>, added by the Resend integration). Leave the key field empty and just set the sender below.
           </p>
         )}
 
@@ -68,11 +68,11 @@ export default async function EmailPage() {
               v={{
                 source: cfg.source,
                 apiKeyLast4: cfg.apiKeyLast4,
-                fromEmail: cfg.source === "dashboard" ? (cfg.fromEmail ?? "") : "",
-                fromName: cfg.source === "dashboard" ? cfg.fromName : "JOBITHLAL",
-                toEmail: cfg.source === "dashboard" ? (cfg.toEmail ?? "") : "",
+                fromEmail: cfg.fromEmail ?? "",
+                fromName: cfg.fromName || "JOBITHLAL",
+                toEmail: cfg.toEmail ?? "",
                 sendConfirmation: cfg.sendConfirmation,
-                enabled: cfg.source === "dashboard" ? cfg.enabled : true,
+                enabled: cfg.enabled,
               }}
             />
           </div>

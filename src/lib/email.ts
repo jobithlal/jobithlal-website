@@ -55,19 +55,21 @@ function envConfig(): EmailConfig {
 export const getEmailConfig = cache(async (): Promise<EmailConfig> => {
   if (!db) return envConfig();
   const row = await db.emailSettings.findUnique({ where: { id: "default" } }).catch(() => null);
-  if (!row?.apiKeyEnc) return envConfig();
+  const env = envConfig();
+  if (!row) return env;
   const parsed = emailDataSchema.safeParse(row.data);
-  const apiKey = open(row.apiKeyEnc);
+  // A key pasted in the admin wins; otherwise the key from Vercel (e.g. the Resend integration) is used.
+  const apiKey = row.apiKeyEnc ? open(row.apiKeyEnc) : env.apiKey;
   return {
-    source: "dashboard",
+    source: row.apiKeyEnc ? "dashboard" : env.apiKey ? "env" : null,
     apiKey,
-    apiKeyLast4: row.apiKeyLast4,
+    apiKeyLast4: row.apiKeyEnc ? row.apiKeyLast4 : env.apiKeyLast4,
     fromEmail: parsed.success ? parsed.data.fromEmail : null,
     fromName: parsed.success ? parsed.data.fromName : "",
     toEmail: parsed.success ? parsed.data.toEmail : null,
     sendConfirmation: parsed.success ? parsed.data.sendConfirmation : false,
     enabled: parsed.success ? parsed.data.enabled : false,
-    keyUnreadable: apiKey === null,
+    keyUnreadable: Boolean(row.apiKeyEnc) && apiKey === null,
   };
 });
 

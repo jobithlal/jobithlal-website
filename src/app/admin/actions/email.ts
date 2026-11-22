@@ -26,13 +26,13 @@ export async function saveEmailConnection(fd: FormData): Promise<ActionResult> {
     if (!parsed.success) for (const i of parsed.error.issues) fieldErrors[String(i.path[0])] = ["Enter a valid email address."];
     if (newKey && !KEY_RE.test(newKey)) fieldErrors.apiKey = ["Resend API keys start with “re_”. Copy the whole key."];
     if (Object.keys(fieldErrors).length || !parsed.success) return { ok: false, error: "Some fields need attention.", fieldErrors };
-    if (!secretBoxReady()) {
+    if (newKey && !secretBoxReady()) {
       return { ok: false, error: "AUTH_SECRET isn't set on the server, so the key can't be stored securely. Add it in Vercel → Environment Variables (32+ random characters) and redeploy." };
     }
 
     const db = requireDb();
     const existing = await db.emailSettings.findUnique({ where: { id: "default" } });
-    const apiKey = newKey || (existing?.apiKeyEnc ? open(existing.apiKeyEnc) : null);
+    const apiKey = newKey || (existing?.apiKeyEnc ? open(existing.apiKeyEnc) : null) || process.env.RESEND_API_KEY || null;
     if (!apiKey) return { ok: false, error: "Paste your Resend API key.", fieldErrors: { apiKey: ["Required."] } };
 
     // Verify the key — and, when the key can see domains, that the sender's domain is verified.
