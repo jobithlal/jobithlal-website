@@ -44,12 +44,12 @@ export function ServiceCard({ service, index, className }: { service: Service; i
       )}
     >
       <div className="relative h-[58%] min-h-60 overflow-hidden">
-        <div className="absolute inset-0 transition-transform duration-[1.2s] ease-[var(--ease-out)] group-hover:scale-[1.06]">
+        <div data-theme="dark" className="absolute inset-0 transition-transform duration-[1.2s] ease-[var(--ease-out)] group-hover:scale-[1.06]">
           <MediaFrame media={service.media} art={artFor(service.slug)} sizes="(min-width:1024px) 30vw, 100vw" playOnHover hovered={hover} />
         </div>
         <div className="absolute inset-0 bg-gradient-to-t from-card via-card/20 to-transparent transition-opacity duration-500 group-hover:opacity-70" />
-        <span className="absolute left-5 top-5 font-display text-sm font-bold text-fg/70">0{index + 1}</span>
-        <span className="absolute right-5 top-5 grid size-11 place-items-center rounded-full border border-white/15 bg-black/40 text-accent backdrop-blur">
+        <span data-theme="dark" className="absolute left-5 top-5 font-display text-sm font-bold text-fg/70">0{index + 1}</span>
+        <span data-theme="dark" className="absolute right-5 top-5 grid size-11 place-items-center rounded-full border border-white/15 bg-black/40 text-accent-fg backdrop-blur">
           <Icon className="size-5" aria-hidden />
         </span>
       </div>

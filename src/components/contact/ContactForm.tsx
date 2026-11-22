@@ -53,7 +53,7 @@ export function ContactForm({ serviceOptions }: { serviceOptions: Option[] }) {
         animate={{ opacity: 1, y: 0 }}
         className="flex flex-col items-start gap-5 rounded-[var(--radius-card)] border border-accent/40 bg-card p-8 outline-none sm:p-10"
       >
-        <CheckCircle2 className="size-10 text-accent" aria-hidden />
+        <CheckCircle2 className="size-10 text-accent-fg" aria-hidden />
         <p className="font-display text-2xl font-bold">{state.message}</p>
         <p className="text-fg-2">I&apos;ve received your inquiry and will reply by email. If it&apos;s urgent, WhatsApp is the fastest way to reach me.</p>
       </motion.div>
@@ -156,7 +156,7 @@ export function ContactForm({ serviceOptions }: { serviceOptions: Option[] }) {
 
       <div className="flex flex-col items-start gap-4 pt-2 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs text-muted">
-          Fields marked <span className="text-accent">*</span> are required. Your details are used only to reply to your inquiry.
+          Fields marked <span className="text-accent-fg">*</span> are required. Your details are used only to reply to your inquiry.
         </p>
         <Button type="submit" disabled={pending} icon={pending ? "none" : "arrow"} className="w-full sm:w-auto" aria-disabled={pending}>
           {pending ? (
@@ -180,7 +180,7 @@ function Label({ htmlFor, children, required }: { htmlFor: string; children: Rea
     <label htmlFor={htmlFor} className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-fg-2">
       {children}
       {required && (
-        <span className="text-accent" aria-hidden>
+        <span className="text-accent-fg" aria-hidden>
           {" "}
           *
         </span>
@@ -279,7 +279,7 @@ function SelectField({
         >
           {children}
         </select>
-        <span aria-hidden className="pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 text-accent">
+        <span aria-hidden className="pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 text-accent-fg">
           ▾
         </span>
       </div>

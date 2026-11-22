@@ -119,7 +119,7 @@ export function Analytics({ measurementId, requireConsent }: { measurementId: st
       </p>
       <p className="mt-2 text-sm leading-relaxed text-fg-2">
         May I use Google Analytics cookies to understand how visitors use this site? No advertising cookies are used. You can change your choice any time from the footer.{" "}
-        <Link href="/privacy-policy" className="text-accent underline-offset-4 hover:underline">
+        <Link href="/privacy-policy" className="text-accent-fg underline-offset-4 hover:underline">
           Privacy policy
         </Link>
       </p>

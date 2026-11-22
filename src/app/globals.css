@@ -12,6 +12,7 @@
   --accent: #d7ff28;
   --accent-2: #c7ff00;
   --accent-ink: #080a08;
+  --accent-text: #d7ff28;
   --text: #ffffff;
   --text-2: #b5bbb5;
   --muted: #858d85;
@@ -29,6 +30,39 @@
   color-scheme: dark;
 }
 
+/* Dark is the default. A subtree can force it back (photo/video panels, the admin). */
+[data-theme="dark"] {
+  --bg: #080a08;
+  --bg-2: #101310;
+  --card: #151915;
+  --elevated: #1b201b;
+  --accent-text: #d7ff28;
+  --accent-ink: #080a08;
+  --text: #ffffff;
+  --text-2: #b5bbb5;
+  --muted: #858d85;
+  --border: #303830;
+  color-scheme: dark;
+  color: var(--text);
+}
+
+/* Light theme. Neon stays the fill colour (buttons, highlights); text that
+   would be neon uses a deep green so it stays readable on light backgrounds. */
+[data-theme="light"] {
+  --bg: #f4f5ef;
+  --bg-2: #e9ebe3;
+  --card: #ffffff;
+  --elevated: #ffffff;
+  --accent-text: #3f5c00;
+  --accent-ink: #080a08;
+  --text: #0b0d0b;
+  --text-2: #444b44;
+  --muted: #6a716a;
+  --border: #d3d8cc;
+  color-scheme: light;
+  color: var(--text);
+}
+
 @theme inline {
   --color-bg: var(--bg);
   --color-bg-2: var(--bg-2);
@@ -36,6 +70,7 @@
   --color-elevated: var(--elevated);
   --color-accent: var(--accent);
   --color-accent-2: var(--accent-2);
+  --color-accent-fg: var(--accent-text);
   --color-ink: var(--accent-ink);
   --color-fg: var(--text);
   --color-fg-2: var(--text-2);
@@ -76,7 +111,7 @@ body {
 }
 
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--accent-text);
   outline-offset: 3px;
   border-radius: 6px;
 }
@@ -110,7 +145,7 @@ body {
   font-weight: 600;
   letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: var(--accent);
+  color: var(--accent-text);
 }
 @utility lead {
   font-size: clamp(1.0625rem, 1.25vw, 1.25rem);

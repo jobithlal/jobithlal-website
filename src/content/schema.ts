@@ -247,3 +247,11 @@ export const analyticsSettingsSchema = z.object({
   requireConsent: z.boolean().default(true),
 });
 export type AnalyticsSettings = z.infer<typeof analyticsSettingsSchema>;
+
+/** Website theme. "toggle" lets visitors switch; `toggleDefault` is what a first-time visitor sees. */
+export const appearanceSettingsSchema = z.object({
+  mode: z.enum(["dark", "light", "toggle"]),
+  toggleDefault: z.enum(["dark", "light", "system"]),
+});
+export type AppearanceSettings = z.infer<typeof appearanceSettingsSchema>;
+export const defaultAppearance: AppearanceSettings = { mode: "dark", toggleDefault: "system" };

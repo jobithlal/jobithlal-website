@@ -17,19 +17,19 @@ export function Footer({ site, services, cookieSettings = false }: { site: SiteS
           <p className="mt-6 max-w-xs text-fg-2">{site.tagline}</p>
           <ul className="mt-8 space-y-3 text-sm text-fg-2">
             <li>
-              <a href={`mailto:${site.email}`} className="inline-flex items-center gap-3 hover:text-accent">
-                <Mail className="size-4 text-accent" aria-hidden />
+              <a href={`mailto:${site.email}`} className="inline-flex items-center gap-3 hover:text-accent-fg">
+                <Mail className="size-4 text-accent-fg" aria-hidden />
                 {site.email}
               </a>
             </li>
             <li>
-              <a href={whatsappLink(site.whatsapp)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-3 hover:text-accent">
-                <MessageCircle className="size-4 text-accent" aria-hidden />
+              <a href={whatsappLink(site.whatsapp)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-3 hover:text-accent-fg">
+                <MessageCircle className="size-4 text-accent-fg" aria-hidden />
                 WhatsApp {formatPhone(site.whatsapp)}
               </a>
             </li>
             <li className="inline-flex items-center gap-3">
-              <MapPin className="size-4 text-accent" aria-hidden />
+              <MapPin className="size-4 text-accent-fg" aria-hidden />
               {site.location}
             </li>
           </ul>

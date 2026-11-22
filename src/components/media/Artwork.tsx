@@ -107,22 +107,22 @@ function MotionArt({ className }: { className?: string }) {
             <stop offset="1" stopColor="var(--accent)" stopOpacity="0.15" />
           </linearGradient>
         </defs>
-        <path d="M30 230 C 120 40, 230 300, 370 70" fill="none" stroke="var(--accent)" strokeWidth="1.5" strokeDasharray="4 6" opacity="0.7" />
+        <path d="M30 230 C 120 40, 230 300, 370 70" fill="none" stroke="var(--accent-text)" strokeWidth="1.5" strokeDasharray="4 6" opacity="0.7" />
         <circle cx="30" cy="230" r="5" fill="var(--accent)" />
         <circle cx="370" cy="70" r="5" fill="var(--accent)" />
         <g style={{ transformOrigin: "120px 120px", animation: "drift 9s ease-in-out infinite" }}>
           <circle cx="120" cy="120" r="56" fill="url(#mg-a)" />
         </g>
         <g style={{ transformOrigin: "275px 175px", animation: "drift 11s ease-in-out infinite reverse" }}>
-          <rect x="235" y="135" width="80" height="80" rx="14" fill="none" stroke="#fff" strokeOpacity="0.85" strokeWidth="2" />
+          <rect x="235" y="135" width="80" height="80" rx="14" fill="none" stroke="var(--text)" strokeOpacity="0.85" strokeWidth="2" />
         </g>
-        <polygon points="300,40 336,100 264,100" fill="none" stroke="var(--accent)" strokeWidth="2" />
+        <polygon points="300,40 336,100 264,100" fill="none" stroke="var(--accent-text)" strokeWidth="2" />
         <g transform="translate(40 270)">
-          <line x1="0" x2="320" y1="0" y2="0" stroke="#fff" strokeOpacity="0.2" />
+          <line x1="0" x2="320" y1="0" y2="0" stroke="var(--text)" strokeOpacity="0.2" />
           {[0, 70, 150, 230, 320].map((x) => (
-            <rect key={x} x={x - 4} y={-4} width="8" height="8" transform={`rotate(45 ${x} 0)`} fill={x === 150 ? "var(--accent)" : "#fff"} fillOpacity={x === 150 ? 1 : 0.6} />
+            <rect key={x} x={x - 4} y={-4} width="8" height="8" transform={`rotate(45 ${x} 0)`} fill={x === 150 ? "var(--accent)" : "var(--text)"} fillOpacity={x === 150 ? 1 : 0.6} />
           ))}
-          <line x1="150" x2="150" y1="-14" y2="14" stroke="var(--accent)" strokeWidth="1.5" />
+          <line x1="150" x2="150" y1="-14" y2="14" stroke="var(--accent-text)" strokeWidth="1.5" />
         </g>
       </svg>
     </div>
@@ -133,35 +133,40 @@ export function Artwork({ variant, className }: { variant: ArtVariant; className
   if (variant === "hero") {
     return (
       <div aria-hidden className={cn("grain absolute inset-0 overflow-hidden bg-bg", className)}>
-        <div className="absolute inset-0 [background:radial-gradient(120%_90%_at_78%_45%,#1a2410_0%,#0b0e0a_45%,var(--bg)_75%)]" />
+        {/* The backdrop follows the site theme; the device mock-ups inside stay dark. */}
+        <div className="absolute inset-0 [background:radial-gradient(120%_90%_at_78%_45%,color-mix(in_srgb,var(--accent)_14%,var(--bg))_0%,color-mix(in_srgb,var(--accent)_5%,var(--bg))_45%,var(--bg)_75%)]" />
         <Glow className="right-[8%] top-[18%] size-[46vw] max-w-[760px] opacity-40" />
         <div className="absolute inset-0 opacity-[0.07] [background-image:linear-gradient(var(--text)_1px,transparent_1px),linear-gradient(90deg,var(--text)_1px,transparent_1px)] [background-size:80px_80px] [mask-image:radial-gradient(70%_70%_at_70%_50%,#000,transparent)]" />
         {/* Viewfinder */}
         <div className="absolute right-[4%] top-1/2 hidden aspect-[16/10] w-[50%] -translate-y-1/2 md:block lg:w-[46%]">
           <Corners />
-          <div className="absolute left-6 top-5 flex items-center gap-2 font-mono text-[11px] tracking-[0.2em] text-white/70">
+          <div className="absolute left-6 top-5 flex items-center gap-2 font-mono text-[11px] tracking-[0.2em] text-fg/70">
             <span className="size-2 rounded-full bg-[#ff3b30]" style={{ animation: "rec-blink 1.4s steps(1) infinite" }} />
             REC
           </div>
-          <div className="absolute right-6 top-5 font-mono text-[11px] tracking-[0.2em] text-white/50">4K · 25P</div>
-          <div className="absolute bottom-5 left-6 font-mono text-[11px] tracking-[0.2em] text-accent/90">00:00:16:00</div>
-          <div className="absolute bottom-5 right-6 h-1 w-24 overflow-hidden rounded bg-white/15">
+          <div className="absolute right-6 top-5 font-mono text-[11px] tracking-[0.2em] text-fg/50">4K · 25P</div>
+          <div className="absolute bottom-5 left-6 font-mono text-[11px] tracking-[0.2em] text-accent-fg/90">00:00:16:00</div>
+          <div className="absolute bottom-5 right-6 h-1 w-24 overflow-hidden rounded bg-fg/15">
             <span className="block h-full w-1/2 bg-accent" style={{ animation: "scan 3.5s linear infinite" }} />
           </div>
           <div className="absolute left-1/2 top-1/2 size-14 -translate-x-1/2 -translate-y-1/2">
-            <span className="absolute left-1/2 top-0 h-full w-px bg-white/30" />
-            <span className="absolute left-0 top-1/2 h-px w-full bg-white/30" />
+            <span className="absolute left-1/2 top-0 h-full w-px bg-fg/30" />
+            <span className="absolute left-0 top-1/2 h-px w-full bg-fg/30" />
           </div>
           {/* Service objects floating inside the frame */}
-          <BrowserArt className="absolute right-[18%] top-[16%] w-[62%] rotate-2" />
-          <PhoneArt className="absolute -bottom-[4%] right-[5%] w-[22%] rotate-6" />
+          <div data-theme="dark" className="contents">
+            <BrowserArt className="absolute right-[18%] top-[16%] w-[62%] rotate-2" />
+            <PhoneArt className="absolute -bottom-[4%] right-[5%] w-[22%] rotate-6" />
+          </div>
           <MotionArt className="absolute bottom-[6%] left-[2%] w-[36%] opacity-80" />
         </div>
         {/* Mobile composition */}
-        <div className="absolute inset-x-0 bottom-0 h-[40%] opacity-60 md:hidden">
+        <div className="absolute inset-x-0 bottom-0 h-[40%] opacity-60 md:hidden [[data-theme=light]_&]:opacity-25">
           <Corners className="inset-x-6 inset-y-4" />
-          <PhoneArt className="absolute bottom-8 right-10 w-[32%] rotate-6" />
-          <BrowserArt className="absolute bottom-16 left-8 w-[52%] -rotate-3" />
+          <div data-theme="dark" className="contents">
+            <PhoneArt className="absolute bottom-8 right-10 w-[32%] rotate-6" />
+            <BrowserArt className="absolute bottom-16 left-8 w-[52%] -rotate-3" />
+          </div>
         </div>
       </div>
     );
@@ -169,7 +174,7 @@ export function Artwork({ variant, className }: { variant: ArtVariant; className
 
   if (variant === "reels") {
     return (
-      <div aria-hidden className={cn("grain absolute inset-0 overflow-hidden [container-type:size] [background:linear-gradient(160deg,#141a10,#0a0c09)]", className)}>
+      <div aria-hidden data-theme="dark" className={cn("grain absolute inset-0 overflow-hidden [container-type:size] [background:linear-gradient(160deg,#141a10,#0a0c09)]", className)}>
         <Glow className="-right-10 -top-10 size-64 opacity-30" />
         <PhoneArt className="absolute left-1/2 top-1/2 w-[min(38cqw,42cqh)] -translate-x-1/2 -translate-y-1/2 -rotate-3 transition-transform duration-700 group-hover:rotate-0" />
         <PhoneArt className="absolute left-[calc(50%-min(38cqw,42cqh))] top-[58%] w-[min(22cqw,25cqh)] -translate-y-1/2 -rotate-12 opacity-40" />
@@ -180,7 +185,7 @@ export function Artwork({ variant, className }: { variant: ArtVariant; className
 
   if (variant === "motion") {
     return (
-      <div aria-hidden className={cn("grain absolute inset-0 overflow-hidden [background:linear-gradient(200deg,#11160d,#090b08)]", className)}>
+      <div aria-hidden data-theme="dark" className={cn("grain absolute inset-0 overflow-hidden [background:linear-gradient(200deg,#11160d,#090b08)]", className)}>
         <Glow className="left-1/4 top-1/4 size-64 opacity-25" />
         <MotionArt className="absolute inset-[10%]" />
       </div>
@@ -189,7 +194,7 @@ export function Artwork({ variant, className }: { variant: ArtVariant; className
 
   if (variant === "websites") {
     return (
-      <div aria-hidden className={cn("grain absolute inset-0 overflow-hidden [container-type:size] [background:linear-gradient(130deg,#10150d,#090b08)]", className)}>
+      <div aria-hidden data-theme="dark" className={cn("grain absolute inset-0 overflow-hidden [container-type:size] [background:linear-gradient(130deg,#10150d,#090b08)]", className)}>
         <Glow className="-bottom-10 -left-10 size-64 opacity-25" />
         <BrowserArt className="absolute left-1/2 top-1/2 w-[min(80cqw,125cqh)] -translate-x-1/2 -translate-y-1/2 transition-transform duration-700 group-hover:-translate-y-[52%]" />
       </div>
@@ -198,14 +203,14 @@ export function Artwork({ variant, className }: { variant: ArtVariant; className
 
   // portrait
   return (
-    <div aria-hidden className={cn("grain absolute inset-0 overflow-hidden [background:radial-gradient(90%_70%_at_50%_35%,#1d2712,#0a0c09_70%)]", className)}>
+    <div aria-hidden data-theme="dark" className={cn("grain absolute inset-0 overflow-hidden [background:radial-gradient(90%_70%_at_50%_35%,#1d2712,#0a0c09_70%)]", className)}>
       <Glow className="left-1/2 top-1/3 size-72 -translate-x-1/2 opacity-30" />
       <div className="absolute inset-0 grid place-items-center">
         <div className="relative grid aspect-square w-[62%] place-items-center rounded-full border border-white/15">
           <span className="absolute inset-[12%] rounded-full border border-dashed border-accent/40" />
           <span className="absolute -inset-px rounded-full border border-accent/60" style={{ animation: "pulse-ring 3.6s var(--ease-out) infinite" }} />
           <span className="font-display text-[clamp(3rem,8vw,6.5rem)] font-bold leading-none tracking-tight">
-            <span className="text-accent">/</span>JL
+            <span className="text-accent-fg">/</span>JL
           </span>
         </div>
       </div>

@@ -28,7 +28,7 @@ export function AnalyticsForm({ v, canEdit }: { v: AnalyticsSettings; canEdit: b
             hint="Recommended. Shows a small banner; GA4 runs in cookieless consent mode until the visitor accepts."
           />
           {canEdit ? (
-            <Btn type="submit" disabled={pending}>
+            <Btn type="submit" variant="primary" disabled={pending}>
               {pending ? "Saving…" : "Save analytics settings"}
             </Btn>
           ) : (

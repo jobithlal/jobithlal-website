@@ -25,7 +25,7 @@ export function BackToTop() {
         document.getElementById("main")?.focus({ preventScroll: true });
       }}
       aria-label="Back to top"
-      className="group inline-flex items-center gap-2 uppercase tracking-[0.18em] text-fg-2 hover:text-accent"
+      className="group inline-flex items-center gap-2 uppercase tracking-[0.18em] text-fg-2 hover:text-accent-fg"
     >
       <span className="hidden sm:inline">Back to top</span>
       <span className="grid size-8 place-items-center rounded-full border border-line transition-colors group-hover:border-accent">

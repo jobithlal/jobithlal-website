@@ -24,10 +24,10 @@ export function Hero({ hero, experienceYears }: { hero: HeroContent; experienceY
         <div
           className="absolute inset-0"
           style={{
-            background: `linear-gradient(90deg, rgba(8,10,8,${0.95 * o}) 0%, rgba(8,10,8,${0.75 * o}) 38%, rgba(8,10,8,0) 72%)`,
+            background: `linear-gradient(90deg, color-mix(in srgb, var(--bg) ${95 * o}%, transparent) 0%, color-mix(in srgb, var(--bg) ${75 * o}%, transparent) 38%, transparent 72%)`,
           }}
         />
-        <div className="absolute inset-x-0 bottom-0 h-1/2" style={{ background: `linear-gradient(0deg, var(--bg) 0%, rgba(8,10,8,${0.6 * o}) 45%, transparent 100%)` }} />
+        <div className="absolute inset-x-0 bottom-0 h-1/2" style={{ background: `linear-gradient(0deg, var(--bg) 0%, color-mix(in srgb, var(--bg) ${60 * o}%, transparent) 45%, transparent 100%)` }} />
       </motion.div>
 
       <div className="container-x relative pb-16 sm:pb-20 lg:pb-0">
@@ -90,7 +90,7 @@ export function Hero({ hero, experienceYears }: { hero: HeroContent; experienceY
         transition={{ delay: 1.6, duration: 1 }}
       >
         <div>
-          <p className="font-display text-4xl font-bold leading-none text-accent">{experienceYears}+</p>
+          <p className="font-display text-4xl font-bold leading-none text-accent-fg">{experienceYears}+</p>
           <p className="mt-2 text-[0.68rem] uppercase tracking-[0.22em] text-muted">Years of creative production</p>
         </div>
         <div className="flex flex-col items-center gap-3">

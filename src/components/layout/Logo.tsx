@@ -21,7 +21,7 @@ export function Logo({
         <Image src={imageUrl} alt={text} width={180} height={40} className="h-8 w-auto" priority />
       ) : (
         <span className="whitespace-nowrap font-display text-[1.35rem] font-bold tracking-[-0.02em] sm:text-2xl">
-          <span className="mr-1 inline-block text-accent transition-transform duration-500 ease-[var(--ease-out)] group-hover:rotate-12">/</span>
+          <span className="mr-1 inline-block text-accent-fg transition-transform duration-500 ease-[var(--ease-out)] group-hover:rotate-12">/</span>
           {text}
         </span>
       )}

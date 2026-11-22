@@ -7,6 +7,8 @@ import { getSiteSettings } from "@/lib/content";
 import { storageConfigured } from "@/lib/media";
 import { Card, PageHeader } from "@/components/admin/kit";
 import { GeneralForm, SocialForm } from "./SettingsClient";
+import { AppearanceForm } from "./AppearanceForm";
+import { getAppearance } from "@/lib/content";
 
 export const metadata: Metadata = { title: "Settings" };
 
@@ -20,15 +22,17 @@ export default async function SettingsPage() {
   ]);
   const logoAsset = site.logoImageUrl ? await db.mediaAsset.findFirst({ where: { url: site.logoImageUrl } }) : logo;
   const canEdit = can(user.role, "settings:edit");
+  const appearance = await getAppearance();
   return (
     <>
-      <PageHeader title="Settings" description="Business details and social profiles." />
+      <PageHeader title="Settings" description="Business details, website appearance and social profiles." />
       <div className="space-y-6">
         <GeneralForm
           canEdit={canEdit}
           storageReady={storageConfigured()}
           v={{ ...site, logo: logoAsset ? { id: logoAsset.id, url: logoAsset.url, posterUrl: logoAsset.posterUrl, type: logoAsset.type, alt: logoAsset.alt } : null }}
         />
+        <AppearanceForm v={appearance} canEdit={canEdit} />
         <SocialForm canEdit={canEdit} links={socials.map((s) => ({ platform: s.platform, url: s.url ?? "", visible: s.visible }))} />
         <Card title="Email, search &amp; analytics">
           <p className="text-sm text-fg-2">

@@ -17,6 +17,9 @@ import {
   type HomeContent,
   seoSettingsSchema,
   analyticsSettingsSchema,
+  appearanceSettingsSchema,
+  defaultAppearance,
+  type AppearanceSettings,
   type SeoSettings,
   type AnalyticsSettings,
   type Media,
@@ -42,6 +45,7 @@ export const TAGS = {
   nav: "content:nav",
   seo: "content:seo",
   analytics: "content:analytics",
+  appearance: "content:appearance",
 } as const;
 
 async function fromDb<T>(label: string, load: () => Promise<T | null>, fallback: T): Promise<T> {
@@ -324,6 +328,16 @@ export async function getSeoSettings(): Promise<SeoSettings> {
 }
 
 const seedAnalytics: AnalyticsSettings = { enabled: false, ga4MeasurementId: null, requireConsent: true };
+
+export async function getAppearance(): Promise<AppearanceSettings> {
+  "use cache";
+  cacheTag(TAGS.appearance);
+  cacheLife("max");
+  if (!db) return defaultAppearance;
+  const row = await db.appearanceSettings.findUnique({ where: { id: "default" } }).catch(() => null);
+  const parsed = appearanceSettingsSchema.safeParse(row?.data);
+  return parsed.success ? parsed.data : defaultAppearance;
+}
 
 export async function getAnalyticsSettings(): Promise<AnalyticsSettings> {
   "use cache";

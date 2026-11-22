@@ -38,7 +38,7 @@ export function Difference({ content }: { content: HomeContent["difference"] }) 
                   {stats.map((s) => (
                     <div key={s.label}>
                       <dt className="sr-only">{s.label}</dt>
-                      <dd className="font-display text-5xl font-bold leading-none text-accent">{s.value}</dd>
+                      <dd className="font-display text-5xl font-bold leading-none text-accent-fg">{s.value}</dd>
                       <dd aria-hidden className="mt-2 max-w-[14rem] text-xs uppercase tracking-[0.18em] text-muted">
                         {s.label}
                       </dd>
@@ -56,7 +56,7 @@ export function Difference({ content }: { content: HomeContent["difference"] }) 
               return (
                 <Reveal as="li" key={v.title} delay={0.1 + i * 0.09}>
                   <div className="group flex h-full gap-4 rounded-2xl border border-line bg-card/60 p-5 transition-colors duration-500 hover:border-accent/50 hover:bg-card">
-                    <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-accent/10 text-accent transition-transform duration-500 group-hover:scale-110 group-hover:bg-accent group-hover:text-ink">
+                    <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-accent/10 text-accent-fg transition-transform duration-500 group-hover:scale-110 group-hover:bg-accent group-hover:text-ink">
                       <Icon className="size-5" aria-hidden />
                     </span>
                     <div>

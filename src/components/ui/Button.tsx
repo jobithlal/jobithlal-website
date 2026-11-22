@@ -15,7 +15,7 @@ const base =
 const variants: Record<Variant, string> = {
   primary:
     "bg-accent text-ink hover:shadow-[0_0_0_1px_var(--accent),0_10px_40px_-10px_color-mix(in_oklab,var(--accent)_70%,transparent)]",
-  ghost: "border border-line bg-white/[0.02] text-fg backdrop-blur-sm hover:border-accent hover:text-accent",
+  ghost: "border border-line bg-white/[0.02] text-fg backdrop-blur-sm hover:border-accent hover:text-accent-fg",
   dark: "bg-ink text-accent hover:bg-black hover:shadow-[0_10px_40px_-12px_rgba(0,0,0,0.8)]",
 };
 

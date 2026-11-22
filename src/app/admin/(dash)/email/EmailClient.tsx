@@ -61,7 +61,7 @@ export function ConnectionForm({ v, canEdit, defaultRecipient }: { v: Connection
           <Toggle label="Send visitors a confirmation email" name="sendConfirmation" defaultChecked={v.sendConfirmation} hint="Uses the “Visitor acknowledgement” template below." />
           {canEdit && (
             <div className="flex flex-wrap items-center gap-3 pt-1">
-              <Btn type="submit" pending={pending}>
+              <Btn type="submit" variant="primary" pending={pending}>
                 {stored || (fromVercel && v.fromEmail) ? "Save changes" : "Connect Resend"}
               </Btn>
               {stored && (
@@ -91,7 +91,7 @@ export function TestEmailForm({ defaultTo, ready }: { defaultTo: string; ready: 
     <Card title="Send a test email">
       <form {...formProps} className="space-y-3">
         <Input label="Send to" name="to" type="email" defaultValue={defaultTo} errors={errors.to} />
-        <Btn type="submit" pending={pending} disabled={!ready}>
+        <Btn type="submit" variant="primary" pending={pending} disabled={!ready}>
           Send test
         </Btn>
         {!ready && <p className="text-xs text-muted">Connect Resend first.</p>}
@@ -112,7 +112,7 @@ export function TemplateForm({ t, canEdit }: { t: { key: string; subject: string
         <Toggle label="Enabled" name="enabled" defaultChecked={t.enabled} />
       </fieldset>
       {canEdit && (
-        <Btn type="submit" pending={pending}>
+        <Btn type="submit" variant="primary" pending={pending}>
           Save template
         </Btn>
       )}

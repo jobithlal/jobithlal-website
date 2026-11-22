@@ -6,7 +6,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { requireDb } from "@/lib/db";
 import { audit } from "@/lib/audit";
 import { TAGS } from "@/lib/content";
-import { siteSettingsSchema } from "@/content/schema";
+import { appearanceSettingsSchema, siteSettingsSchema } from "@/content/schema";
 import { formObject, guarded, type ActionResult } from "@/lib/admin/action";
 import { fieldErrorsFrom } from "@/lib/admin/sections";
 
@@ -89,5 +89,22 @@ export async function saveEmailTemplate(key: string, fd: FormData): Promise<Acti
     await audit("settings.email_template", { userId: user.id, entity: "EmailTemplate", entityId: t.id, details: { key } });
     refresh();
     return { ok: true, message: "Email template saved." };
+  });
+}
+
+export async function saveAppearance(fd: FormData): Promise<ActionResult> {
+  return guarded("settings:edit", async (user) => {
+    const parsed = appearanceSettingsSchema.safeParse({ mode: fd.get("mode"), toggleDefault: fd.get("toggleDefault") ?? "system" });
+    if (!parsed.success) return { ok: false, error: "Choose a theme option." };
+    await requireDb().appearanceSettings.upsert({
+      where: { id: "default" },
+      create: { id: "default", data: parsed.data as Prisma.InputJsonValue },
+      update: { data: parsed.data as Prisma.InputJsonValue },
+    });
+    await audit("settings.appearance", { userId: user.id, details: parsed.data });
+    updateTag(TAGS.appearance);
+    refresh();
+    const msg = { dark: "The website now uses dark mode.", light: "The website now uses light mode.", toggle: "Visitors can now switch between dark and light mode." }[parsed.data.mode];
+    return { ok: true, message: msg };
   });
 }

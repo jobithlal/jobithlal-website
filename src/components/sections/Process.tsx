@@ -72,7 +72,7 @@ export function Process({ content }: { content: HomeContent["process"] }) {
                       on ? "border-accent/40 bg-card" : "border-line bg-card/40",
                     )}
                   >
-                    <p className={cn("font-display text-sm font-bold transition-colors", on ? "text-accent" : "text-muted")}>
+                    <p className={cn("font-display text-sm font-bold transition-colors", on ? "text-accent-fg" : "text-muted")}>
                       {String(i + 1).padStart(2, "0")}
                     </p>
                     <h3 className="mt-3 font-display text-2xl font-bold tracking-tight">{s.title}</h3>

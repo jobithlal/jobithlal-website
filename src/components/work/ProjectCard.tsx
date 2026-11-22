@@ -13,8 +13,9 @@ import { cn } from "@/lib/utils";
 export function DemoBadge({ className }: { className?: string }) {
   return (
     <span
+      data-theme="dark"
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full border border-dashed border-accent/60 bg-black/60 px-3 py-1 text-[0.62rem] font-semibold uppercase tracking-[0.18em] text-accent backdrop-blur",
+        "inline-flex items-center gap-1.5 rounded-full border border-dashed border-accent/60 bg-black/60 px-3 py-1 text-[0.62rem] font-semibold uppercase tracking-[0.18em] text-accent-fg backdrop-blur",
         className,
       )}
     >
@@ -40,7 +41,7 @@ export function ProjectCard({ project, className, aspect = "aspect-[4/5]" }: { p
       data-track-label={project.title}
       aria-label={`${project.title}${project.isDemo ? " (sample layout)" : ""} — view project`}
     >
-      <div className={cn("relative overflow-hidden rounded-[var(--radius-card)] border border-line bg-card transition-colors duration-500 group-hover:border-accent/60", aspect)}>
+      <div data-theme="dark" className={cn("relative overflow-hidden rounded-[var(--radius-card)] border border-line bg-card transition-colors duration-500 group-hover:border-accent/60", aspect)}>
         <div className="absolute inset-0 transition-transform duration-[1.2s] ease-[var(--ease-out)] group-hover:scale-[1.07]">
           <MediaFrame media={project.cover} art={artFor(project.category)} sizes="(min-width:1024px) 30vw, 85vw" playOnHover hovered={hover} />
         </div>

@@ -17,14 +17,14 @@ export function ContactDetails({ site }: { site: SiteSettings }) {
       {items.map(({ icon: Icon, label, value, href, external }) => {
         const inner = (
           <>
-            <span className="grid size-12 shrink-0 place-items-center rounded-full bg-accent/10 text-accent transition-colors group-hover:bg-accent group-hover:text-ink">
+            <span className="grid size-12 shrink-0 place-items-center rounded-full bg-accent/10 text-accent-fg transition-colors group-hover:bg-accent group-hover:text-ink">
               <Icon className="size-5" aria-hidden />
             </span>
             <span className="flex-1">
               <span className="block text-xs uppercase tracking-[0.18em] text-muted">{label}</span>
               <span className="block break-all font-display text-lg font-bold">{value}</span>
             </span>
-            {href && <ArrowUpRight className="size-5 text-muted transition-all group-hover:rotate-45 group-hover:text-accent" aria-hidden />}
+            {href && <ArrowUpRight className="size-5 text-muted transition-all group-hover:rotate-45 group-hover:text-accent-fg" aria-hidden />}
           </>
         );
         const cls = "group flex items-center gap-4 rounded-2xl border border-line bg-card/50 p-4 transition-colors hover:border-accent/50";

@@ -125,6 +125,13 @@ model AnalyticsSettings {
   updatedAt  DateTime @updatedAt
 }
 
+/// Website appearance (light/dark theme). JSON validated by appearanceSettingsSchema.
+model AppearanceSettings {
+  id        String   @id @default("default")
+  data      Json
+  updatedAt DateTime @updatedAt
+}
+
 /// Resend connection set from the admin. The API key is AES-256-GCM encrypted
 /// with a key derived from AUTH_SECRET; only the last 4 characters are kept readable.
 model EmailSettings {

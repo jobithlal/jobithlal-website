@@ -7,6 +7,7 @@ import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "motion/
 import { ChevronDown, Menu, X, ArrowUpRight } from "lucide-react";
 import { mainNav } from "./nav";
 import { Logo } from "./Logo";
+import { ThemeToggle } from "./Theme";
 import { ButtonLink } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 
@@ -15,6 +16,8 @@ type ServiceLink = { slug: string; title: string; subtitle: string };
 type HeaderProps = {
   logo: { text: string; subtitle: string; imageUrl?: string };
   services: ServiceLink[];
+  /** Show the visitor light/dark switch (Admin → Settings → Appearance). */
+  themeToggle?: boolean;
   behavior?: "auto-hide" | "sticky";
 };
 
@@ -27,7 +30,7 @@ export function Header(props: HeaderProps) {
  * The header itself. `pathname` is passed in so a static copy (without the
  * active-page underline) can be prerendered as the Suspense fallback.
  */
-export function HeaderShell({ logo, services, behavior = "auto-hide", pathname }: HeaderProps & { pathname: string | null }) {
+export function HeaderShell({ logo, services, themeToggle, behavior = "auto-hide", pathname }: HeaderProps & { pathname: string | null }) {
   const { scrollY } = useScroll();
   const [scrolled, setScrolled] = useState(false);
   const [hidden, setHidden] = useState(false);
@@ -109,6 +112,7 @@ export function HeaderShell({ logo, services, behavior = "auto-hide", pathname }
           </nav>
 
           <div className="flex items-center gap-3">
+            {themeToggle && <ThemeToggle />}
             <div className="hidden sm:block">
               <ButtonLink href="/contact" className="h-12 px-6">
                 Start a project
@@ -120,7 +124,7 @@ export function HeaderShell({ logo, services, behavior = "auto-hide", pathname }
               aria-expanded={open}
               aria-controls="mobile-menu"
               aria-label={open ? "Close menu" : "Open menu"}
-              className="grid size-12 place-items-center rounded-full border border-line bg-white/[0.03] text-fg transition-colors hover:border-accent hover:text-accent lg:hidden"
+              className="grid size-12 place-items-center rounded-full border border-line bg-white/[0.03] text-fg transition-colors hover:border-accent hover:text-accent-fg lg:hidden"
             >
               {open ? <X className="size-5" /> : <Menu className="size-5" />}
             </button>
@@ -222,7 +226,7 @@ function ServicesDropdown({
             if (Date.now() - hoverOpenedAt.current < 400) return setOpen(true);
             setOpen((o) => !o);
           }}
-          className="-ml-3 grid size-7 place-items-center rounded-full text-fg-2 hover:text-accent"
+          className="-ml-3 grid size-7 place-items-center rounded-full text-fg-2 hover:text-accent-fg"
         >
           <ChevronDown className={cn("size-3.5 transition-transform duration-300", open && "rotate-180")} />
         </button>
@@ -244,12 +248,12 @@ function ServicesDropdown({
                     href={`/services/${s.slug}`}
                     className="group flex items-center gap-4 rounded-xl px-4 py-3.5 transition-colors hover:bg-elevated focus-visible:bg-elevated"
                   >
-                    <span className="font-display text-sm font-bold text-accent">0{i + 1}</span>
+                    <span className="font-display text-sm font-bold text-accent-fg">0{i + 1}</span>
                     <span className="flex-1">
                       <span className="block text-sm font-semibold text-fg">{s.title}</span>
                       <span className="block text-xs text-muted">{s.subtitle}</span>
                     </span>
-                    <ArrowUpRight className="size-4 text-muted transition-all group-hover:rotate-45 group-hover:text-accent" />
+                    <ArrowUpRight className="size-4 text-muted transition-all group-hover:rotate-45 group-hover:text-accent-fg" />
                   </Link>
                 </li>
               ))}
@@ -333,7 +337,7 @@ function MobileMenu({
                     onClick={onClose}
                     className="flex items-center justify-between py-4 font-display text-[2rem] font-bold uppercase leading-none tracking-tight"
                   >
-                    <span className={cn(isActive(n) ? "text-accent" : "text-fg")}>{n.label}</span>
+                    <span className={cn(isActive(n) ? "text-accent-fg" : "text-fg")}>{n.label}</span>
                     <span className="text-xs font-medium tracking-[0.2em] text-muted">0{i + 1}</span>
                   </Link>
                   {n.label === "Services" && (
@@ -343,9 +347,9 @@ function MobileMenu({
                           <Link
                             href={`/services/${s.slug}`}
                             onClick={onClose}
-                            className="flex items-center gap-2 text-sm text-fg-2 hover:text-accent"
+                            className="flex items-center gap-2 text-sm text-fg-2 hover:text-accent-fg"
                           >
-                            <ArrowUpRight className="size-3.5 text-accent" />
+                            <ArrowUpRight className="size-3.5 text-accent-fg" />
                             {s.title}
                           </Link>
                         </li>

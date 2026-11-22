@@ -86,7 +86,7 @@ export default async function ServicePage({ params }: PageProps<"/services/[slug
             {p.features.map((f, i) => (
               <Reveal as="li" key={f.title} delay={(i % 4) * 0.06}>
                 <div className="border-sweep group flex h-full gap-4 rounded-2xl border border-line bg-card/60 p-6 transition-colors hover:bg-card">
-                  <span className="grid size-9 shrink-0 place-items-center rounded-full bg-accent/10 text-accent transition-colors group-hover:bg-accent group-hover:text-ink">
+                  <span className="grid size-9 shrink-0 place-items-center rounded-full bg-accent/10 text-accent-fg transition-colors group-hover:bg-accent group-hover:text-ink">
                     <Check className="size-4" aria-hidden />
                   </span>
                   <div>
@@ -140,7 +140,7 @@ export default async function ServicePage({ params }: PageProps<"/services/[slug
           <ol className="mt-12 grid gap-px overflow-hidden rounded-[var(--radius-card)] border border-line bg-line sm:grid-cols-2 lg:grid-cols-4">
             {p.process.map((st, i) => (
               <Reveal as="li" key={st.title} delay={i * 0.08} className="bg-bg-2 p-7">
-                <p className="font-display text-5xl font-bold leading-none text-accent">{String(i + 1).padStart(2, "0")}</p>
+                <p className="font-display text-5xl font-bold leading-none text-accent-fg">{String(i + 1).padStart(2, "0")}</p>
                 <h3 className="mt-6 font-display text-xl font-bold">{st.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-fg-2">{st.text}</p>
               </Reveal>

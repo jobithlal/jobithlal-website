@@ -70,7 +70,7 @@ export function MaskLines({
         const isAccent = accentText ? i === all.length - 1 : i === accentIndex;
         return (
           <span key={i} className="block overflow-hidden pb-[0.06em]">
-            <motion.span variants={line} className={`block will-change-transform ${lineClassName ?? ""} ${isAccent ? "text-accent" : ""}`}>
+            <motion.span variants={line} className={`block will-change-transform ${lineClassName ?? ""} ${isAccent ? "text-accent-fg" : ""}`}>
               {l}
             </motion.span>
           </span>

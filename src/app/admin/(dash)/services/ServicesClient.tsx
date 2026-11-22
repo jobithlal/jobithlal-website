@@ -28,7 +28,7 @@ export function NewServiceForm() {
 
   if (!open) {
     return (
-      <Btn type="button" onClick={() => setOpen(true)}>
+      <Btn type="button" variant="primary" onClick={() => setOpen(true)}>
         <Plus className="size-4" aria-hidden /> New service
       </Btn>
     );
@@ -61,7 +61,7 @@ export function NewServiceForm() {
         />
         <Select label="Icon" name="icon" defaultValue="sparkles" options={SERVICE_ICONS.map((i) => ({ value: i.value, label: i.label }))} />
         <div className="flex gap-3 sm:col-span-3">
-          <Btn type="submit" pending={pending}>
+          <Btn type="submit" variant="primary" pending={pending}>
             Create service
           </Btn>
           <Btn type="button" variant="ghost" onClick={() => setOpen(false)}>

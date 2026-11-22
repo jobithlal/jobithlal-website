@@ -2,20 +2,23 @@ import { Suspense } from "react";
 import { Header, HeaderShell } from "./Header";
 import { Footer } from "./Footer";
 import { Providers } from "./Providers";
-import { getAnalyticsSettings, getServices, getSiteSettings } from "@/lib/content";
+import { getAnalyticsSettings, getAppearance, getServices, getSiteSettings } from "@/lib/content";
+import { ThemeScript } from "./Theme";
 import { Analytics } from "@/components/analytics/Analytics";
 import { JsonLd, siteJsonLd } from "@/lib/seo";
 
 /** Public-site frame: header, main landmark and footer. The admin has its own layout. */
 export async function SiteChrome({ children }: { children: React.ReactNode }) {
-  const [site, services, analytics] = await Promise.all([getSiteSettings(), getServices(), getAnalyticsSettings()]);
+  const [site, services, analytics, appearance] = await Promise.all([getSiteSettings(), getServices(), getAnalyticsSettings(), getAppearance()]);
   const ga = analytics.enabled && analytics.ga4MeasurementId ? analytics.ga4MeasurementId : null;
   const headerProps = {
     logo: { text: site.logoText, subtitle: site.logoSubtitle, imageUrl: site.logoImageUrl },
     services: services.map((s) => ({ slug: s.slug, title: s.title, subtitle: s.subtitle })),
+    themeToggle: appearance.mode === "toggle",
   };
   return (
     <>
+      <ThemeScript appearance={appearance} />
       <JsonLd data={siteJsonLd(site)} />
       <Providers>
         <Suspense fallback={<HeaderShell {...headerProps} pathname={null} />}>
