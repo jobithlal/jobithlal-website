@@ -10,10 +10,18 @@ export const mainNav: NavItem[] = [
   { label: "Contact", href: "/#contact", section: "contact", match: "/contact" },
 ];
 
+/** Blog link. Always in the footer; in the header only when Admin → Blog → "Show in header menu" is on. */
+export const blogNavItem: NavItem = { label: "Blog", href: "/blog", match: "/blog" };
+
+/** Main menu, with the Blog link inserted before Contact when enabled. */
+export const headerNav = (showBlog: boolean): NavItem[] =>
+  showBlog ? [...mainNav.slice(0, -1), blogNavItem, mainNav[mainNav.length - 1]] : mainNav;
+
 export const footerNav: NavItem[] = [
   { label: "Home", href: "/" },
   { label: "Services", href: "/#services" },
   { label: "Work", href: "/work" },
   { label: "About", href: "/about" },
+  blogNavItem,
   { label: "Contact", href: "/contact" },
 ];

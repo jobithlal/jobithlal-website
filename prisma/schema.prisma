@@ -368,6 +368,7 @@ model MediaAsset {
   projectVideos     Project[]      @relation("ProjectVideo")
   projectOg         Project[]      @relation("ProjectOg")
   projectGalleries  ProjectMedia[]
+  blogCovers        BlogPost[]     @relation("BlogCover")
 
   @@index([type, createdAt])
   @@index([folderId])
@@ -442,4 +443,48 @@ model BackupRecord {
   createdById  String?
   createdBy    User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
   createdAt    DateTime @default(now())
+}
+
+// ─── Blog ───────────────────────────────────────────────────────────────────
+
+model BlogCategory {
+  id    String     @id @default(cuid())
+  slug  String     @unique
+  name  String
+  order Int        @default(0)
+  posts BlogPost[]
+}
+
+/// A blog article. Content is Markdown. A cover is either an uploaded media
+/// file (coverId) or a bundled image under /public (coverUrl).
+model BlogPost {
+  id             String        @id @default(cuid())
+  slug           String        @unique
+  title          String
+  excerpt        String
+  content        String
+  categoryId     String?
+  category       BlogCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  coverId        String?
+  cover          MediaAsset?   @relation("BlogCover", fields: [coverId], references: [id], onDelete: Restrict)
+  coverUrl       String?
+  coverAlt       String        @default("")
+  authorName     String        @default("Jobith Lal")
+  featured       Boolean       @default(false)
+  status         PublishStatus @default(DRAFT)
+  publishedAt    DateTime?
+  readingMinutes Int           @default(1)
+  seoTitle       String?
+  seoDescription String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([status, publishedAt])
+}
+
+/// Blog page settings (header link toggle, listing hero copy). JSON validated by blogSettingsSchema.
+model BlogSettings {
+  id        String   @id @default("default")
+  data      Json
+  updatedAt DateTime @updatedAt
 }

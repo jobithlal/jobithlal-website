@@ -9,6 +9,9 @@ import { PrismaClient, type Prisma } from "../src/generated/prisma/client";
 import { siteSettings, hero, ticker, home } from "../src/content/site";
 import { services } from "../src/content/services";
 import { projects, categoryLabels } from "../src/content/projects";
+import { readFileSync, readdirSync } from "node:fs";
+import { join } from "node:path";
+import { readingMinutes } from "../src/lib/markdown-types";
 
 const db = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL! }) });
 const json = (v: unknown) => v as Prisma.InputJsonValue;
@@ -144,7 +147,75 @@ async function main() {
   ];
   for (const t of templates) await db.emailTemplate.upsert({ where: { key: t.key }, create: t, update: {} });
 
+  await seedBlog();
   console.log("Seed complete.");
+}
+
+const BLOG_CATEGORIES = [
+  { slug: "ai-technology", name: "AI & Technology" },
+  { slug: "photography", name: "Photography" },
+  { slug: "videography", name: "Videography" },
+  { slug: "content-creation", name: "Content Creation" },
+  { slug: "creative-workflow", name: "Creative Workflow" },
+  { slug: "industry-insights", name: "Industry Insights" },
+];
+
+/** Minimal front-matter reader for prisma/blog-seed/*.md (key: value lines). */
+function readArticle(file: string) {
+  const raw = readFileSync(file, "utf8");
+  const m = raw.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+  if (!m) throw new Error(`Missing front matter in ${file}`);
+  const meta: Record<string, string> = {};
+  for (const line of m[1].split("\n")) {
+    const i = line.indexOf(":");
+    if (i === -1) continue;
+    meta[line.slice(0, i).trim()] = line.slice(i + 1).trim().replace(/^"(.*)"$/, "$1");
+  }
+  return { meta, content: m[2].trim() + "\n" };
+}
+
+/**
+ * Adds the blog categories and sample articles once. A "seeded" flag in
+ * BlogSettings makes sure deleted articles are never re-created on later deploys.
+ */
+async function seedBlog() {
+  const row = await db.blogSettings.findUnique({ where: { id: "default" } });
+  const data = (row?.data ?? {}) as Record<string, unknown>;
+  if (data.seeded) return;
+
+  for (const [order, c] of BLOG_CATEGORIES.entries()) {
+    await db.blogCategory.upsert({ where: { slug: c.slug }, create: { ...c, order }, update: {} });
+  }
+  const cats = new Map((await db.blogCategory.findMany()).map((c) => [c.slug, c.id]));
+  const dir = join(process.cwd(), "prisma", "blog-seed");
+  for (const f of readdirSync(dir).filter((x) => x.endsWith(".md")).sort()) {
+    const { meta, content } = readArticle(join(dir, f));
+    if (await db.blogPost.findUnique({ where: { slug: meta.slug } })) continue;
+    await db.blogPost.create({
+      data: {
+        slug: meta.slug,
+        title: meta.title,
+        excerpt: meta.excerpt,
+        content,
+        categoryId: cats.get(meta.category) ?? null,
+        coverUrl: `/blog/${meta.slug}/cover.webp`,
+        coverAlt: meta.coverAlt ?? "",
+        authorName: "Jobith Lal",
+        featured: meta.featured === "true",
+        status: "PUBLISHED",
+        publishedAt: new Date(`${meta.publishedAt}T09:00:00+03:00`),
+        readingMinutes: readingMinutes(content),
+        seoTitle: meta.seoTitle || null,
+        seoDescription: meta.seoDescription || null,
+      },
+    });
+  }
+  await db.blogSettings.upsert({
+    where: { id: "default" },
+    create: { id: "default", data: json({ ...data, seeded: true }) },
+    update: { data: json({ ...data, seeded: true }) },
+  });
+  console.log("Blog sample articles added.");
 }
 
 main()

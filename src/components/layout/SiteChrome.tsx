@@ -4,17 +4,19 @@ import { Footer } from "./Footer";
 import { Providers } from "./Providers";
 import { getAnalyticsSettings, getAppearance, getServices, getSiteSettings } from "@/lib/content";
 import { ThemeScript } from "./Theme";
+import { getBlogSettings } from "@/lib/blog";
 import { Analytics } from "@/components/analytics/Analytics";
 import { JsonLd, siteJsonLd } from "@/lib/seo";
 
 /** Public-site frame: header, main landmark and footer. The admin has its own layout. */
 export async function SiteChrome({ children }: { children: React.ReactNode }) {
-  const [site, services, analytics, appearance] = await Promise.all([getSiteSettings(), getServices(), getAnalyticsSettings(), getAppearance()]);
+  const [site, services, analytics, appearance, blog] = await Promise.all([getSiteSettings(), getServices(), getAnalyticsSettings(), getAppearance(), getBlogSettings()]);
   const ga = analytics.enabled && analytics.ga4MeasurementId ? analytics.ga4MeasurementId : null;
   const headerProps = {
     logo: { text: site.logoText, subtitle: site.logoSubtitle, imageUrl: site.logoImageUrl },
     services: services.map((s) => ({ slug: s.slug, title: s.title, subtitle: s.subtitle })),
     themeToggle: appearance.mode === "toggle",
+    showBlog: blog.showInHeader,
   };
   return (
     <>

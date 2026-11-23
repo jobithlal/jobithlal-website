@@ -210,6 +210,7 @@ export const SEO_PAGES = [
   { path: "/work", label: "Work" },
   { path: "/about", label: "About" },
   { path: "/contact", label: "Contact" },
+  { path: "/blog", label: "Blog" },
   { path: "/privacy-policy", label: "Privacy Policy" },
   { path: "/terms", label: "Terms" },
 ] as const;
@@ -268,3 +269,20 @@ export const appearanceSettingsSchema = z.object({
 });
 export type AppearanceSettings = z.infer<typeof appearanceSettingsSchema>;
 export const defaultAppearance: AppearanceSettings = { mode: "dark", toggleDefault: "system" };
+
+/** Blog page settings. `showInHeader` adds Blog to the main menu (off: footer only). */
+export const blogSettingsSchema = z.object({
+  showInHeader: z.boolean().default(false),
+  heroEyebrow: z.string().trim().min(1).max(60).default("Journal"),
+  heroTitle: z.string().trim().min(1).max(120).default("Notes on light, motion and the tools behind the work"),
+  heroIntro: z
+    .string()
+    .trim()
+    .min(1)
+    .max(400)
+    .default("Practical writing on photography, videography, AI-powered production and creative workflow — from a studio working in Doha, Qatar."),
+  perPage: z.number().int().min(3).max(24).default(9),
+  /** Set once the sample articles have been added, so deleted ones are never re-created. */
+  seeded: z.boolean().default(false),
+});
+export type BlogSettings = z.infer<typeof blogSettingsSchema>;

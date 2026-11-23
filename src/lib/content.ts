@@ -47,6 +47,7 @@ export const TAGS = {
   seo: "content:seo",
   analytics: "content:analytics",
   appearance: "content:appearance",
+  blog: "content:blog",
 } as const;
 
 async function fromDb<T>(label: string, load: () => Promise<T | null>, fallback: T): Promise<T> {

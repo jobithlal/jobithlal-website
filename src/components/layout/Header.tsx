@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "motion/react";
 import { ChevronDown, Menu, X, ArrowUpRight } from "lucide-react";
-import { mainNav } from "./nav";
+import { headerNav, mainNav } from "./nav";
 import { Logo } from "./Logo";
 import { ThemeToggle } from "./Theme";
 import { ButtonLink } from "@/components/ui/Button";
@@ -18,6 +18,8 @@ type HeaderProps = {
   services: ServiceLink[];
   /** Show the visitor light/dark switch (Admin → Settings → Appearance). */
   themeToggle?: boolean;
+  /** Show the Blog link in the main menu (Admin → Blog). */
+  showBlog?: boolean;
   behavior?: "auto-hide" | "sticky";
 };
 
@@ -30,7 +32,7 @@ export function Header(props: HeaderProps) {
  * The header itself. `pathname` is passed in so a static copy (without the
  * active-page underline) can be prerendered as the Suspense fallback.
  */
-export function HeaderShell({ logo, services, themeToggle, behavior = "auto-hide", pathname }: HeaderProps & { pathname: string | null }) {
+export function HeaderShell({ logo, services, themeToggle, showBlog = false, behavior = "auto-hide", pathname }: HeaderProps & { pathname: string | null }) {
   const { scrollY } = useScroll();
   const [scrolled, setScrolled] = useState(false);
   const [hidden, setHidden] = useState(false);
@@ -38,6 +40,7 @@ export function HeaderShell({ logo, services, themeToggle, behavior = "auto-hide
   const [activeSection, setActiveSection] = useState("top");
   const isHome = pathname === "/";
   const path = pathname ?? "";
+  const nav = headerNav(showBlog);
 
   useMotionValueEvent(scrollY, "change", (y) => {
     const prev = scrollY.getPrevious() ?? 0;
@@ -97,7 +100,7 @@ export function HeaderShell({ logo, services, themeToggle, behavior = "auto-hide
 
           <nav aria-label="Main" className="hidden xl:block">
             <ul className="flex items-center gap-1">
-              {mainNav.map((n) =>
+              {nav.map((n) =>
                 n.label === "Services" ? (
                   <ServicesDropdown key={n.label} item={n} services={services} active={isActive(n)} />
                 ) : (
@@ -132,7 +135,7 @@ export function HeaderShell({ logo, services, themeToggle, behavior = "auto-hide
         </div>
       </motion.header>
 
-      <MobileMenu open={open} onClose={() => setOpen(false)} services={services} isActive={isActive} />
+      <MobileMenu open={open} onClose={() => setOpen(false)} services={services} isActive={isActive} nav={nav} />
     </>
   );
 }
@@ -270,11 +273,13 @@ function MobileMenu({
   onClose,
   services,
   isActive,
+  nav,
 }: {
   open: boolean;
   onClose: () => void;
   services: ServiceLink[];
   isActive: (n: (typeof mainNav)[number]) => boolean;
+  nav: (typeof mainNav)[number][];
 }) {
   const panel = useRef<HTMLDivElement>(null);
 
@@ -324,7 +329,7 @@ function MobileMenu({
           <div className="pointer-events-none absolute -right-24 top-24 size-80 rounded-full bg-accent/10 blur-3xl" />
           <nav aria-label="Mobile" className="container-x flex-1">
             <ul className="border-t border-line">
-              {mainNav.map((n, i) => (
+              {nav.map((n, i) => (
                 <motion.li
                   key={n.label}
                   initial={{ opacity: 0, y: 24 }}
