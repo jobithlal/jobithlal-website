@@ -9,29 +9,42 @@ import { MaskLines } from "@/components/ui/Reveal";
 const ease = [0.22, 1, 0.36, 1] as const;
 
 export function Hero({ hero, experienceYears }: { hero: HeroContent; experienceYears: number }) {
-  const o = hero.overlayStrength;
   return (
-    <section id="top" aria-labelledby="hero-heading" className="relative isolate flex min-h-[100svh] items-end overflow-hidden pt-28 lg:items-center">
-      {/* 1. Background reveal */}
-      <motion.div
-        className="absolute inset-0 -z-10"
-        initial={{ opacity: 0, scale: 1.06 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 1.8, ease }}
-      >
-        <MediaFrame media={hero.media} art="hero" priority opacity={hero.mediaOpacity} />
-        {/* Legibility gradients — strength is admin-controlled */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background: `linear-gradient(90deg, color-mix(in srgb, var(--bg) ${95 * o}%, transparent) 0%, color-mix(in srgb, var(--bg) ${75 * o}%, transparent) 38%, transparent 72%)`,
-          }}
-        />
-        <div className="absolute inset-x-0 bottom-0 h-1/2" style={{ background: `linear-gradient(0deg, var(--bg) 0%, color-mix(in srgb, var(--bg) ${60 * o}%, transparent) 45%, transparent 100%)` }} />
-      </motion.div>
+    <section
+      id="top"
+      aria-labelledby="hero-heading"
+      className="relative isolate overflow-hidden pb-16 pt-28 sm:pb-20 lg:flex lg:min-h-[100svh] lg:items-center lg:pb-24"
+    >
+      {/* Soft themed backdrop behind the frame */}
+      <div
+        aria-hidden
+        className="absolute inset-0 -z-10 [background:radial-gradient(70%_60%_at_50%_18%,color-mix(in_srgb,var(--accent)_9%,transparent),transparent_70%)] lg:[background:radial-gradient(55%_75%_at_80%_50%,color-mix(in_srgb,var(--accent)_9%,transparent),transparent_70%)]"
+      />
 
-      <div className="container-x relative pb-16 sm:pb-20 lg:pb-0">
-        <div className="max-w-[58rem]">
+      <div className="container-x grid w-full items-center gap-10 lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-14 xl:gap-20">
+        {/* Hero media: top-centre on mobile, right column aligned with the text on desktop */}
+        <motion.div
+          className="relative mx-auto w-[min(78vw,21rem)] lg:order-2 lg:mx-0 lg:w-auto"
+          initial={{ opacity: 0, scale: 0.96, y: 16 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 1.4, ease, delay: 0.2 }}
+        >
+          <div className="relative aspect-[4/5] w-full overflow-hidden rounded-[var(--radius-card)] border border-line bg-card shadow-2xl lg:h-[min(56svh,30rem)] lg:w-auto xl:h-[min(64svh,38rem)]">
+            <MediaFrame media={hero.media} art="hero" priority opacity={hero.mediaOpacity} sizes="(min-width: 1024px) 32vw, 78vw" />
+          </div>
+          {/* Experience badge pinned to the frame */}
+          <motion.div
+            className="absolute -bottom-5 left-4 hidden rounded-2xl xl:-left-5 border border-line bg-elevated/95 px-5 py-4 shadow-xl backdrop-blur sm:block"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.6, duration: 0.8, ease }}
+          >
+            <p className="font-display text-3xl font-bold leading-none text-accent-fg">{experienceYears}+</p>
+            <p className="mt-1.5 text-[0.62rem] uppercase tracking-[0.22em] text-muted">Years of creative production</p>
+          </motion.div>
+        </motion.div>
+
+        <div className="lg:order-1">
           {/* 2. Eyebrow */}
           <motion.p
             className="eyebrow inline-flex items-center gap-3"
@@ -46,8 +59,8 @@ export function Hero({ hero, experienceYears }: { hero: HeroContent; experienceY
             {hero.eyebrow}
           </motion.p>
 
-          {/* 3–5. Headline lines */}
-          <h1 id="hero-heading" className="display-xl mt-6">
+          {/* 3–5. Headline lines (a little smaller on desktop so it sits beside the frame) */}
+          <h1 id="hero-heading" className="display-xl mt-6 lg:text-[clamp(3.5rem,5.6vw,6.25rem)]">
             <MaskLines lines={hero.lines} accentIndex={hero.accentLine} delay={0.5} stagger={0.14} animateOnMount />
           </h1>
 
@@ -63,7 +76,7 @@ export function Hero({ hero, experienceYears }: { hero: HeroContent; experienceY
 
           {/* 7. CTAs */}
           <motion.div
-            className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4"
+            className="mt-10 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4"
             initial="hidden"
             animate="show"
             variants={{ show: { transition: { staggerChildren: 0.1, delayChildren: 1.25 } } }}
@@ -82,27 +95,22 @@ export function Hero({ hero, experienceYears }: { hero: HeroContent; experienceY
         </div>
       </div>
 
-      {/* Side meta (desktop) */}
+      {/* Scroll cue (desktop) */}
       <motion.div
-        className="absolute bottom-10 right-[var(--gutter)] hidden items-end gap-10 text-right lg:flex"
+        aria-hidden
+        className="absolute bottom-6 left-1/2 hidden -translate-x-1/2 flex-col items-center gap-2 lg:flex"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 1.6, duration: 1 }}
+        transition={{ delay: 1.8, duration: 1 }}
       >
-        <div>
-          <p className="font-display text-4xl font-bold leading-none text-accent-fg">{experienceYears}+</p>
-          <p className="mt-2 text-[0.68rem] uppercase tracking-[0.22em] text-muted">Years of creative production</p>
-        </div>
-        <div className="flex flex-col items-center gap-3">
-          <span className="text-[0.68rem] uppercase tracking-[0.22em] text-muted [writing-mode:vertical-rl]">Scroll</span>
-          <span className="relative block h-14 w-px overflow-hidden bg-line">
-            <motion.span
-              className="absolute inset-x-0 top-0 h-1/2 bg-accent"
-              animate={{ y: ["-100%", "200%"] }}
-              transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-            />
-          </span>
-        </div>
+        <span className="text-[0.62rem] uppercase tracking-[0.22em] text-muted">Scroll</span>
+        <span className="relative block h-10 w-px overflow-hidden bg-line">
+          <motion.span
+            className="absolute inset-x-0 top-0 h-1/2 bg-accent"
+            animate={{ y: ["-100%", "200%"] }}
+            transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+          />
+        </span>
       </motion.div>
     </section>
   );

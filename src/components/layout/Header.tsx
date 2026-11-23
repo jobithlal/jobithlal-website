@@ -95,7 +95,7 @@ export function HeaderShell({ logo, services, themeToggle, behavior = "auto-hide
         <div className="container-x flex h-20 items-center justify-between gap-6 lg:h-24">
           <Logo text={logo.text} subtitle={logo.subtitle} imageUrl={logo.imageUrl} />
 
-          <nav aria-label="Main" className="hidden lg:block">
+          <nav aria-label="Main" className="hidden xl:block">
             <ul className="flex items-center gap-1">
               {mainNav.map((n) =>
                 n.label === "Services" ? (
@@ -124,7 +124,7 @@ export function HeaderShell({ logo, services, themeToggle, behavior = "auto-hide
               aria-expanded={open}
               aria-controls="mobile-menu"
               aria-label={open ? "Close menu" : "Open menu"}
-              className="grid size-12 place-items-center rounded-full border border-line bg-white/[0.03] text-fg transition-colors hover:border-accent hover:text-accent-fg lg:hidden"
+              className="grid size-12 place-items-center rounded-full border border-line bg-white/[0.03] text-fg transition-colors hover:border-accent hover:text-accent-fg xl:hidden"
             >
               {open ? <X className="size-5" /> : <Menu className="size-5" />}
             </button>
@@ -319,7 +319,7 @@ function MobileMenu({
           animate={{ clipPath: "inset(0 0 0% 0)" }}
           exit={{ clipPath: "inset(0 0 100% 0)" }}
           transition={{ duration: 0.6, ease: [0.76, 0, 0.24, 1] }}
-          className="fixed inset-0 z-40 flex flex-col overflow-y-auto bg-bg pt-24 lg:hidden"
+          className="fixed inset-0 z-40 flex flex-col overflow-y-auto bg-bg pt-24 xl:hidden"
         >
           <div className="pointer-events-none absolute -right-24 top-24 size-80 rounded-full bg-accent/10 blur-3xl" />
           <nav aria-label="Mobile" className="container-x flex-1">

@@ -131,43 +131,24 @@ function MotionArt({ className }: { className?: string }) {
 
 export function Artwork({ variant, className }: { variant: ArtVariant; className?: string }) {
   if (variant === "hero") {
+    // Portrait "viewfinder" panel shown in the hero frame until real media is uploaded.
     return (
-      <div aria-hidden className={cn("grain absolute inset-0 overflow-hidden bg-bg", className)}>
-        {/* The backdrop follows the site theme; the device mock-ups inside stay dark. */}
-        <div className="absolute inset-0 [background:radial-gradient(120%_90%_at_78%_45%,color-mix(in_srgb,var(--accent)_14%,var(--bg))_0%,color-mix(in_srgb,var(--accent)_5%,var(--bg))_45%,var(--bg)_75%)]" />
-        <Glow className="right-[8%] top-[18%] size-[46vw] max-w-[760px] opacity-40" />
-        <div className="absolute inset-0 opacity-[0.07] [background-image:linear-gradient(var(--text)_1px,transparent_1px),linear-gradient(90deg,var(--text)_1px,transparent_1px)] [background-size:80px_80px] [mask-image:radial-gradient(70%_70%_at_70%_50%,#000,transparent)]" />
-        {/* Viewfinder */}
-        <div className="absolute right-[4%] top-1/2 hidden aspect-[16/10] w-[50%] -translate-y-1/2 md:block lg:w-[46%]">
-          <Corners />
-          <div className="absolute left-6 top-5 flex items-center gap-2 font-mono text-[11px] tracking-[0.2em] text-fg/70">
-            <span className="size-2 rounded-full bg-[#ff3b30]" style={{ animation: "rec-blink 1.4s steps(1) infinite" }} />
-            REC
-          </div>
-          <div className="absolute right-6 top-5 font-mono text-[11px] tracking-[0.2em] text-fg/50">4K · 25P</div>
-          <div className="absolute bottom-5 left-6 font-mono text-[11px] tracking-[0.2em] text-accent-fg/90">00:00:16:00</div>
-          <div className="absolute bottom-5 right-6 h-1 w-24 overflow-hidden rounded bg-fg/15">
-            <span className="block h-full w-1/2 bg-accent" style={{ animation: "scan 3.5s linear infinite" }} />
-          </div>
-          <div className="absolute left-1/2 top-1/2 size-14 -translate-x-1/2 -translate-y-1/2">
-            <span className="absolute left-1/2 top-0 h-full w-px bg-fg/30" />
-            <span className="absolute left-0 top-1/2 h-px w-full bg-fg/30" />
-          </div>
-          {/* Service objects floating inside the frame */}
-          <div data-theme="dark" className="contents">
-            <BrowserArt className="absolute right-[18%] top-[16%] w-[62%] rotate-2" />
-            <PhoneArt className="absolute -bottom-[4%] right-[5%] w-[22%] rotate-6" />
-          </div>
-          <MotionArt className="absolute bottom-[6%] left-[2%] w-[36%] opacity-80" />
+      <div aria-hidden data-theme="dark" className={cn("grain absolute inset-0 overflow-hidden [background:linear-gradient(160deg,#141a10,#0a0c09)]", className)}>
+        <div className="absolute inset-0 [background:radial-gradient(90%_70%_at_60%_40%,color-mix(in_srgb,var(--accent)_16%,transparent),transparent_70%)]" />
+        <div className="absolute inset-0 opacity-[0.08] [background-image:linear-gradient(var(--text)_1px,transparent_1px),linear-gradient(90deg,var(--text)_1px,transparent_1px)] [background-size:48px_48px]" />
+        <Corners className="inset-5" />
+        <div className="absolute left-9 top-8 flex items-center gap-2 font-mono text-[10px] tracking-[0.2em] text-fg/70">
+          <span className="size-2 rounded-full bg-[#ff3b30]" style={{ animation: "rec-blink 1.4s steps(1) infinite" }} />
+          REC
         </div>
-        {/* Mobile composition */}
-        <div className="absolute inset-x-0 bottom-0 h-[40%] opacity-60 md:hidden [[data-theme=light]_&]:opacity-25">
-          <Corners className="inset-x-6 inset-y-4" />
-          <div data-theme="dark" className="contents">
-            <PhoneArt className="absolute bottom-8 right-10 w-[32%] rotate-6" />
-            <BrowserArt className="absolute bottom-16 left-8 w-[52%] -rotate-3" />
-          </div>
+        <div className="absolute right-9 top-8 font-mono text-[10px] tracking-[0.2em] text-fg/50">4K · 25P</div>
+        <div className="absolute bottom-8 left-9 font-mono text-[10px] tracking-[0.2em] text-accent-fg/90">00:00:16:00</div>
+        <div className="absolute bottom-9 right-9 h-1 w-16 overflow-hidden rounded bg-fg/15">
+          <span className="block h-full w-1/2 bg-accent" style={{ animation: "scan 3.5s linear infinite" }} />
         </div>
+        <BrowserArt className="absolute left-[9%] top-[17%] w-[72%] -rotate-2" />
+        <PhoneArt className="absolute bottom-[12%] right-[9%] w-[34%] rotate-6" />
+        <MotionArt className="absolute bottom-[10%] left-[6%] w-[52%] opacity-80" />
       </div>
     );
   }

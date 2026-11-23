@@ -73,9 +73,10 @@ export function SectionForm({
               <MediaField label="Mobile image / poster" name="heroMobileImage" value={m(med.mobileImageUrl)} accept="IMAGE" storageReady={storageReady} />
               <MediaField label="Mobile video" name="heroMobileVideo" value={m(med.mobileVideoUrl)} accept="VIDEO" storageReady={storageReady} />
               <Input label="Alt text" name="mediaAlt" defaultValue={s(med.alt)} hint="Leave empty if the media is purely decorative." />
-              <Input label="Focal point" name="focal" defaultValue={s(med.focal) || "60% 50%"} errors={err("media.focal")} hint="e.g. 60% 50%" />
+              <Input label="Focal point" name="focal" defaultValue={s(med.focal) || "60% 50%"} errors={err("media.focal")} hint="The hero frame is portrait (4:5) — use a portrait image or video. The focal point keeps the subject in view, e.g. 50% 30%." />
               <Input label="Media opacity (%)" name="mediaOpacity" type="number" min={0} max={100} defaultValue={Math.round(Number(data.mediaOpacity ?? 0.85) * 100)} />
-              <Input label="Dark overlay strength (%)" name="overlayStrength" type="number" min={0} max={100} defaultValue={Math.round(Number(data.overlayStrength ?? 0.85) * 100)} hint="Higher = more contrast for the headline." />
+              {/* The hero image now sits in its own frame beside the text, so no overlay is needed; the stored value is kept. */}
+              <input type="hidden" name="overlayStrength" value={Math.round(Number(data.overlayStrength ?? 0.85) * 100)} />
               <Toggle label="Autoplay video" name="autoplay" defaultChecked={Boolean(data.autoplay)} />
               <Toggle label="Loop video" name="loop" defaultChecked={Boolean(data.loop)} />
             </div>
