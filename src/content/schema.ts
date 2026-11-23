@@ -139,7 +139,17 @@ export const projectSchema = z.object({
   externalVideoUrl: z.string().url().optional(),
   gallery: z.array(mediaSchema).default([]),
   /** Project videos, shown three per row with player controls. */
-  videos: z.array(z.object({ media: mediaSchema, caption: z.string().optional() })).default([]),
+  videos: z
+    .array(
+      z.object({
+        /** Uploaded video… */
+        media: mediaSchema.optional(),
+        /** …or a YouTube/Vimeo embed. */
+        embed: z.object({ provider: z.enum(["youtube", "vimeo"]), embedUrl: z.string().url(), thumbnailUrl: z.string().url().optional() }).optional(),
+        caption: z.string().optional(),
+      }),
+    )
+    .default([]),
   videoShape: z.enum(["portrait", "square", "landscape"]).default("portrait"),
   featured: z.boolean().default(false),
   order: z.number().int().default(0),

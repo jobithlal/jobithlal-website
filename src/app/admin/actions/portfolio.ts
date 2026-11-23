@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import { parseVideoLink } from "@/lib/video-embed";
 import { refresh, updateTag } from "next/cache";
 import { requireDb } from "@/lib/db";
 import { audit } from "@/lib/audit";
@@ -49,7 +50,7 @@ const projectSchema = z.object({
     .max(500)
     .optional()
     .transform((v) => (v ? v : null))
-    .refine((v) => v === null || /^https:\/\/(www\.)?(youtube\.com|youtu\.be|vimeo\.com|player\.vimeo\.com)\//.test(v), "Use a YouTube or Vimeo link."),
+    .refine((v) => v === null || parseVideoLink(v) !== null, "Use a YouTube or Vimeo video link."),
   focal: z.string().trim().regex(/^\d{1,3}% \d{1,3}%$/, "Use the form '50% 50%'.").default("50% 50%"),
   tags: lines(20),
   featured: z.enum(["true", "false"]).optional().transform((v) => v === "true"),
@@ -73,6 +74,20 @@ const projectSchema = z.object({
   intent: z.enum(["save", "publish", "unpublish"]).default("save"),
 });
 
+/** Looks up a Vimeo video's thumbnail via oEmbed (no API key needed). Null when unavailable. */
+async function vimeoThumbnail(url: string): Promise<string | null> {
+  const link = parseVideoLink(url);
+  if (link?.provider !== "vimeo") return null;
+  try {
+    const res = await fetch(`https://vimeo.com/api/oembed.json?width=720&url=${encodeURIComponent(url)}`, { signal: AbortSignal.timeout(5000), cache: "no-store" });
+    if (!res.ok) return null;
+    const body = (await res.json()) as { thumbnail_url?: string };
+    return body.thumbnail_url?.startsWith("https://") ? body.thumbnail_url : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function saveProject(projectId: string | null, fd: FormData): Promise<ActionResult<{ id: string }>> {
   return guarded("portfolio:edit", async (user) => {
     const data = projectSchema.parse(formObject(fd));
@@ -85,17 +100,32 @@ export async function saveProject(projectId: string | null, fd: FormData): Promi
 
     const db = requireDb();
     // Only reference media that exists (ids come from the browser).
-    const ids = [data.coverId, data.mobileCoverId, data.videoId, data.ogImageId, ...data.gallery, ...data.videoItem].filter(Boolean) as string[];
+    // Video entries are uploaded-file ids or YouTube/Vimeo links.
+    const isLink = (x: string) => /^https?:\/\//i.test(x);
+    const badLink = data.videoItem.find((x) => isLink(x) && !parseVideoLink(x));
+    if (badLink) return { ok: false, error: `This isn't a YouTube or Vimeo video link: ${badLink.slice(0, 80)}` };
+    const fileVideoIds = data.videoItem.filter((x) => !isLink(x));
+    const ids = [data.coverId, data.mobileCoverId, data.videoId, data.ogImageId, ...data.gallery, ...fileVideoIds].filter(Boolean) as string[];
     if (ids.length) {
       const found = await db.mediaAsset.count({ where: { id: { in: [...new Set(ids)] } } });
       if (found !== new Set(ids).size) return { ok: false, error: "One of the selected media files no longer exists. Choose it again." };
     }
-    if (data.videoItem.length) {
-      const nonVideo = await db.mediaAsset.count({ where: { id: { in: data.videoItem }, type: { not: "VIDEO" } } });
+    if (fileVideoIds.length) {
+      const nonVideo = await db.mediaAsset.count({ where: { id: { in: fileVideoIds }, type: { not: "VIDEO" } } });
       if (nonVideo) return { ok: false, error: "Only videos can be added to the Videos section." };
     }
-    const videoIds = [...new Set(data.videoItem)];
-    const imageIds = [...new Set(data.gallery)].filter((id) => !videoIds.includes(id));
+    const videoItems = [...new Set(data.videoItem)];
+    const imageIds = [...new Set(data.gallery)].filter((id) => !fileVideoIds.includes(id));
+    // Thumbnails for Vimeo links (YouTube's are derived from the id). Reuse ones already looked up.
+    const known = projectId
+      ? new Map(
+          (await db.projectMedia.findMany({ where: { projectId, externalUrl: { not: null } }, select: { externalUrl: true, externalThumb: true } })).map((m) => [m.externalUrl!, m.externalThumb]),
+        )
+      : new Map<string, string | null>();
+    const thumbs = new Map<string, string | null>();
+    await Promise.all(
+      videoItems.filter(isLink).map(async (url) => thumbs.set(url, known.get(url) ?? (await vimeoThumbnail(url)))),
+    );
 
     const existing = projectId ? await db.project.findUniqueOrThrow({ where: { id: projectId }, select: { status: true, publishedAt: true } }) : null;
     const status = data.intent === "publish" ? "PUBLISHED" : data.intent === "unpublish" ? "DRAFT" : (existing?.status ?? "DRAFT");
@@ -137,8 +167,12 @@ export async function saveProject(projectId: string | null, fd: FormData): Promi
       await tx.projectMedia.deleteMany({ where: { projectId: p.id } });
       // Videos first (with captions), then the image gallery — each keeps the order set in the editor.
       const rows = [
-        ...videoIds.map((assetId, i) => ({ assetId, caption: data.videoCaption[data.videoItem.indexOf(assetId)] || null, order: i })),
-        ...imageIds.map((assetId, i) => ({ assetId, caption: null, order: videoIds.length + i })),
+        ...videoItems.map((item, i) => ({
+          ...(isLink(item) ? { assetId: null, externalUrl: item, externalThumb: thumbs.get(item) ?? null } : { assetId: item }),
+          caption: data.videoCaption[data.videoItem.indexOf(item)] || null,
+          order: i,
+        })),
+        ...imageIds.map((assetId, i) => ({ assetId, caption: null, order: videoItems.length + i })),
       ];
       if (rows.length) await tx.projectMedia.createMany({ data: rows.map((r) => ({ ...r, projectId: p.id })) });
       return p;

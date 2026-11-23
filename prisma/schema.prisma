@@ -312,8 +312,12 @@ model ProjectMedia {
   id         String     @id @default(cuid())
   projectId  String
   project    Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  assetId    String
-  asset      MediaAsset @relation(fields: [assetId], references: [id], onDelete: Restrict)
+  /// Either an uploaded file (assetId) or a YouTube/Vimeo link (externalUrl).
+  assetId    String?
+  asset      MediaAsset? @relation(fields: [assetId], references: [id], onDelete: Restrict)
+  externalUrl   String?
+  /// Thumbnail looked up from YouTube/Vimeo when the link was saved.
+  externalThumb String?
   order      Int        @default(0)
   caption    String?
 

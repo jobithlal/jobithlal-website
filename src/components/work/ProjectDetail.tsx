@@ -3,6 +3,7 @@ import { ArrowRight } from "lucide-react";
 import { categoryLabelOf } from "@/content/projects";
 import { artFor } from "@/content/service-map";
 import { ProjectVideos } from "./ProjectVideos";
+import { parseVideoLink } from "@/lib/video-embed";
 import type { HomeContent, Project } from "@/content/schema";
 import { breadcrumbJsonLd, JsonLd } from "@/lib/seo";
 import { PageHero } from "@/components/ui/PageHero";
@@ -13,23 +14,10 @@ import { DemoBadge } from "@/components/work/ProjectCard";
 import { FinalCta } from "@/components/sections/FinalCta";
 
 
-/** Turns YouTube/Vimeo page URLs into privacy-friendly embed URLs. */
-function embedUrl(url: string) {
-  try {
-    const u = new URL(url);
-    if (u.hostname.includes("youtube.com")) return `https://www.youtube-nocookie.com/embed/${u.searchParams.get("v")}`;
-    if (u.hostname === "youtu.be") return `https://www.youtube-nocookie.com/embed${u.pathname}`;
-    if (u.hostname.includes("vimeo.com") && !u.hostname.startsWith("player.")) return `https://player.vimeo.com/video${u.pathname}?dnt=1`;
-    return url;
-  } catch {
-    return null;
-  }
-}
-
 /** Case-study layout shared by the public project page and the admin draft preview. */
 export function ProjectDetail({ project, next, finalCta }: { project: Project; next?: Project; finalCta: HomeContent["finalCta"] }) {
   const client = project.client && !project.hideClient ? project.client : null;
-  const embed = project.externalVideoUrl ? embedUrl(project.externalVideoUrl) : null;
+  const embed = parseVideoLink(project.externalVideoUrl)?.embedUrl ?? null;
 
   const facts = [
     { k: "Category", v: categoryLabelOf(project) },

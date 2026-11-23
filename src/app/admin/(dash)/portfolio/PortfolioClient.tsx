@@ -6,6 +6,7 @@ import { ArrowDown, ArrowUp, Film, Plus, Star, X } from "lucide-react";
 import { deleteProject, moveProject, saveProject, toggleFeatured } from "@/app/admin/actions/portfolio";
 import { Btn, Card, ConfirmButton, Input, Select, Textarea, Toggle, useActionForm, useToast } from "@/components/admin/kit";
 import { MediaField, MediaPickerButton, type PickedMedia } from "@/components/admin/MediaPicker";
+import { parseVideoLink } from "@/lib/video-embed";
 
 export function ProjectRowControls({ id, featured, first, last, reorderable }: { id: string; featured: boolean; first: boolean; last: boolean; reorderable: boolean }) {
   const toast = useToast();
@@ -61,12 +62,18 @@ export type ProjectFormValues = {
   seoDescription: string;
   ogImage: PickedMedia;
   gallery: NonNullable<PickedMedia>[];
-  videos: { media: NonNullable<PickedMedia>; caption: string }[];
+  videos: VideoEntry[];
   videoShape: string;
   status: "DRAFT" | "PUBLISHED";
   isDemo: boolean;
   publicSlug: string | null;
 };
+
+/** A project video: an uploaded file or a YouTube/Vimeo link. */
+export type VideoEntry =
+  | { kind: "file"; media: NonNullable<PickedMedia>; caption: string }
+  | { kind: "link"; url: string; thumb: string | null; caption: string };
+const entryKey = (x: VideoEntry) => (x.kind === "file" ? x.media.id : x.url);
 
 export function ProjectForm({
   v,
@@ -83,6 +90,17 @@ export function ProjectForm({
   const toast = useToast();
   const [gallery, setGallery] = useState(v.gallery);
   const [videos, setVideos] = useState(v.videos);
+  const [linkInput, setLinkInput] = useState("");
+  const [linkError, setLinkError] = useState<string | null>(null);
+  const addLink = () => {
+    const parsed = parseVideoLink(linkInput);
+    if (!parsed) return setLinkError("Paste a YouTube or Vimeo video link, e.g. https://youtu.be/… or https://vimeo.com/…");
+    const url = linkInput.trim();
+    if (videos.some((x) => x.kind === "link" && parseVideoLink(x.url)?.embedUrl === parsed.embedUrl)) return setLinkError("That video is already in the list.");
+    setVideos((a) => [...a, { kind: "link", url, thumb: parsed.thumbnailUrl ?? null, caption: "" }]);
+    setLinkInput("");
+    setLinkError(null);
+  };
   const moveVideo = (i: number, d: -1 | 1) =>
     setVideos((a) => {
       const b = [...a];
@@ -181,25 +199,34 @@ export function ProjectForm({
           description="Add as many videos as you like for this client. They're shown three per row on the project page, each with a play button."
         >
           {videos.map((x) => (
-            <span key={`${x.media.id}-h`}>
-              <input type="hidden" name="videoItem" value={x.media.id} />
+            <span key={`${entryKey(x)}-h`}>
+              {/* Uploaded files submit their id; links submit the URL. */}
+              <input type="hidden" name="videoItem" value={x.kind === "file" ? x.media.id : x.url} />
               <input type="hidden" name="videoCaption" value={x.caption} />
             </span>
           ))}
           {videos.length > 0 && (
             <ul className="mb-4 space-y-2">
               {videos.map((x, i) => (
-                <li key={x.media.id} className="flex items-center gap-3 rounded-lg border border-line bg-bg-2 p-2">
+                <li key={entryKey(x)} className="flex items-center gap-3 rounded-lg border border-line bg-bg-2 p-2">
                   <span className="w-6 shrink-0 text-center text-xs text-muted">{i + 1}</span>
                   <div className="relative size-14 shrink-0 overflow-hidden rounded-md bg-black">
-                    {/* eslint-disable-next-line @next/next/no-img-element -- admin thumbnail */}
-                    {x.media.posterUrl ? <img src={x.media.posterUrl} alt="" className="h-full w-full object-cover" /> : <Film className="absolute inset-0 m-auto size-5 text-muted" />}
+                    {(() => {
+                      const thumb = x.kind === "file" ? x.media.posterUrl : x.thumb;
+                      // eslint-disable-next-line @next/next/no-img-element -- admin thumbnail
+                      return thumb ? <img src={thumb} alt="" className="h-full w-full object-cover" /> : <Film className="absolute inset-0 m-auto size-5 text-muted" />;
+                    })()}
+                    {x.kind === "link" && (
+                      <span className="absolute bottom-0.5 left-0.5 rounded bg-black/75 px-1 text-[9px] font-bold uppercase text-white">
+                        {parseVideoLink(x.url)?.provider === "vimeo" ? "Vimeo" : "YouTube"}
+                      </span>
+                    )}
                   </div>
                   <input
                     value={x.caption}
                     onChange={(ev) => setVideos((a) => a.map((y, j) => (j === i ? { ...y, caption: ev.target.value } : y)))}
                     maxLength={200}
-                    placeholder={x.media.alt || x.media.url.split("/").pop() || "Caption (optional)"}
+                    placeholder={x.kind === "file" ? x.media.alt || x.media.url.split("/").pop() || "Caption (optional)" : `Caption (optional) — ${x.url.replace(/^https?:\/\/(www\.)?/, "")}`}
                     aria-label={`Caption for video ${i + 1}`}
                     className="h-9 min-w-0 flex-1 rounded-lg border border-line bg-bg px-3 text-sm"
                   />
@@ -224,10 +251,15 @@ export function ProjectForm({
               ariaLabel="Add videos to this project"
               accept="VIDEO"
               disabled={!storageReady}
-              onPickMany={(ms) => setVideos((a) => [...a, ...ms.filter((m) => !a.some((x) => x.media.id === m.id)).map((m) => ({ media: m, caption: "" }))])}
+              onPickMany={(ms) =>
+                setVideos((a) => [
+                  ...a,
+                  ...ms.filter((m) => !a.some((x) => x.kind === "file" && x.media.id === m.id)).map((m): VideoEntry => ({ kind: "file", media: m, caption: "" })),
+                ])
+              }
               className="inline-flex h-11 items-center gap-2 rounded-full border-2 border-dashed border-line px-5 text-sm font-semibold text-fg-2 hover:border-accent hover:text-accent disabled:opacity-50"
             >
-              <Plus className="size-4" aria-hidden /> Add videos
+              <Plus className="size-4" aria-hidden /> Upload or choose videos
             </MediaPickerButton>
             <div className="w-56">
               <Select
@@ -243,7 +275,42 @@ export function ProjectForm({
               />
             </div>
           </div>
-          {!storageReady && <p className="mt-2 text-xs text-muted">Connect media storage to add videos.</p>}
+          <div className="mt-4">
+            <label htmlFor="video-link" className="mb-1.5 block text-sm font-medium text-fg-2">
+              Or add a YouTube / Vimeo link
+            </label>
+            <div className="flex gap-2">
+              <input
+                id="video-link"
+                value={linkInput}
+                onChange={(ev) => {
+                  setLinkInput(ev.target.value);
+                  setLinkError(null);
+                }}
+                onKeyDown={(ev) => {
+                  if (ev.key === "Enter") {
+                    ev.preventDefault();
+                    addLink();
+                  }
+                }}
+                placeholder="https://youtube.com/shorts/…  or  https://vimeo.com/…"
+                inputMode="url"
+                aria-invalid={Boolean(linkError)}
+                aria-describedby={linkError ? "video-link-error" : undefined}
+                className="h-11 min-w-0 flex-1 rounded-lg border border-line bg-bg-2 px-3 text-sm"
+              />
+              <Btn type="button" onClick={addLink} disabled={!linkInput.trim()}>
+                Add link
+              </Btn>
+            </div>
+            {linkError && (
+              <p id="video-link-error" className="mt-1.5 text-xs text-[#ffb4a8]">
+                {linkError}
+              </p>
+            )}
+            <p className="mt-1.5 text-xs text-muted">Works with YouTube videos and Shorts, and Vimeo (including unlisted links). Visitors play them on your page.</p>
+          </div>
+          {!storageReady && <p className="mt-2 text-xs text-muted">Connect media storage to upload videos — links work without it.</p>}
         </Card>
         <Card title="Search & sharing">
           <div className="grid gap-4 sm:grid-cols-2">

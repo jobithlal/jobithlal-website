@@ -6,6 +6,7 @@ import { siteSettings as seedSite, hero as seedHero, ticker as seedTicker, home 
 import { services as seedServices } from "@/content/services";
 import { projects as seedProjects } from "@/content/projects";
 import { categoryForService, inquiryValueForService } from "@/content/service-map";
+import { parseVideoLink } from "@/lib/video-embed";
 import { serviceOptions as legacyServiceOptions } from "@/lib/contact-schema";
 import {
   heroSchema,
@@ -242,11 +243,14 @@ export function toProject(p: ProjectRow): Project {
     cover: media({ image: p.cover, mobileImage: p.mobileCover, video: p.video, focal: p.focal, alt: p.title }),
     externalVideoUrl: p.externalVideoUrl ?? undefined,
     // Images form the photo gallery; videos get their own three-per-row grid.
-    gallery: p.gallery.filter((g) => g.asset.type === "IMAGE").map((g) => media({ image: g.asset, alt: g.caption ?? g.asset.alt })),
-    videos: p.gallery
-      .filter((g) => g.asset.type === "VIDEO")
-      .map((g) => ({ media: media({ video: g.asset, alt: g.caption || g.asset.alt || p.title }), caption: g.caption ?? undefined })),
-    videoShape: resolveVideoShape(p.videoShape, p.gallery.find((g) => g.asset.type === "VIDEO")?.asset),
+    gallery: p.gallery.flatMap((g) => (g.asset?.type === "IMAGE" ? [media({ image: g.asset, alt: g.caption ?? g.asset.alt })] : [])),
+    videos: p.gallery.flatMap((g): Project["videos"] => {
+      if (g.asset?.type === "VIDEO") return [{ media: media({ video: g.asset, alt: g.caption || g.asset.alt || p.title }), caption: g.caption ?? undefined }];
+      const link = !g.asset ? parseVideoLink(g.externalUrl) : null;
+      if (!link) return [];
+      return [{ embed: { provider: link.provider, embedUrl: link.embedUrl, thumbnailUrl: g.externalThumb ?? link.thumbnailUrl }, caption: g.caption ?? undefined }];
+    }),
+    videoShape: resolveVideoShape(p.videoShape, p.gallery.find((g) => g.asset?.type === "VIDEO")?.asset ?? undefined),
     featured: p.featured,
     order: p.order,
     status: p.status === "PUBLISHED" ? "published" : "draft",

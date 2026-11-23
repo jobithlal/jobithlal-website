@@ -1,7 +1,7 @@
 import "server-only";
 import { requireDb } from "@/lib/db";
 import type { PickedMedia } from "@/components/admin/MediaPicker";
-import type { ProjectFormValues } from "./PortfolioClient";
+import type { ProjectFormValues, VideoEntry } from "./PortfolioClient";
 
 type A = { id: string; url: string; posterUrl: string | null; type: "IMAGE" | "VIDEO"; alt: string } | null;
 const pick = (a: A): PickedMedia => (a ? { id: a.id, url: a.url, posterUrl: a.posterUrl, type: a.type, alt: a.alt } : null);
@@ -39,8 +39,14 @@ export async function loadProjectForm(id: string): Promise<ProjectFormValues | n
     seoTitle: p.seoTitle ?? "",
     seoDescription: p.seoDescription ?? "",
     ogImage: pick(p.ogImage),
-    gallery: p.gallery.filter((g) => g.asset.type === "IMAGE").map((g) => pick(g.asset)!),
-    videos: p.gallery.filter((g) => g.asset.type === "VIDEO").map((g) => ({ media: pick(g.asset)!, caption: g.caption ?? "" })),
+    gallery: p.gallery.flatMap((g) => (g.asset?.type === "IMAGE" ? [pick(g.asset)!] : [])),
+    videos: p.gallery.flatMap((g): VideoEntry[] =>
+      g.asset?.type === "VIDEO"
+        ? [{ kind: "file", media: pick(g.asset)!, caption: g.caption ?? "" }]
+        : !g.asset && g.externalUrl
+          ? [{ kind: "link", url: g.externalUrl, thumb: g.externalThumb, caption: g.caption ?? "" }]
+          : [],
+    ),
     videoShape: p.videoShape,
     status: p.status,
     isDemo: p.isDemo,
