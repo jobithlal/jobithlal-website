@@ -19,8 +19,11 @@ export function MediaPickerButton({
   className,
   children,
   ariaLabel,
+  onPickMany,
 }: {
-  onPick: (m: NonNullable<PickedMedia>) => void;
+  onPick?: (m: NonNullable<PickedMedia>) => void;
+  /** Multi-select mode: tick several files (and files uploaded here are ticked automatically). */
+  onPickMany?: (m: NonNullable<PickedMedia>[]) => void;
   accept?: "IMAGE" | "VIDEO" | "any";
   title?: string;
   selectedId?: string;
@@ -35,6 +38,10 @@ export function MediaPickerButton({
   const [q, setQ] = useState("");
   const [loading, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const multi = Boolean(onPickMany);
+  const [selected, setSelected] = useState<string[]>([]);
+  const toPicked = (a: PickerAsset): NonNullable<PickedMedia> => ({ id: a.id, url: a.url, posterUrl: a.posterUrl, type: a.type, alt: a.alt });
+  const toggle = (id: string) => setSelected((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
 
   const load = (query: string) =>
     start(async () => {
@@ -55,7 +62,10 @@ export function MediaPickerButton({
 
   return (
     <>
-      <button type="button" disabled={disabled} aria-label={ariaLabel} className={className} onClick={() => setOpen(true)}>
+      <button type="button" disabled={disabled} aria-label={ariaLabel} className={className} onClick={() => {
+          setSelected([]);
+          setOpen(true);
+        }}>
         {children}
       </button>
       <dialog
@@ -91,7 +101,13 @@ export function MediaPickerButton({
               </div>
             </div>
             <div className="flex-1 overflow-y-auto p-4">
-              <Uploader compact onUploaded={() => load("")} />
+              <Uploader
+                compact
+                onUploaded={(id) => {
+                  if (multi) setSelected((cur) => (cur.includes(id) ? cur : [...cur, id]));
+                  load("");
+                }}
+              />
               {error && <p className="mt-4 text-sm text-[#ffb4a8]">{error}</p>}
               {loading && items.length === 0 ? (
                 <p className="mt-6 text-sm text-muted">Loading…</p>
@@ -103,12 +119,28 @@ export function MediaPickerButton({
                     <li key={a.id}>
                       <button
                         type="button"
+                        aria-pressed={multi ? selected.includes(a.id) : undefined}
                         onClick={() => {
-                          onPick({ id: a.id, url: a.url, posterUrl: a.posterUrl, type: a.type, alt: a.alt });
+                          if (multi) return toggle(a.id);
+                          onPick?.(toPicked(a));
                           setOpen(false);
                         }}
-                        className={cn("group block w-full overflow-hidden rounded-lg border text-left hover:border-accent", selectedId === a.id ? "border-accent" : "border-line")}
+                        className={cn(
+                          "group relative block w-full overflow-hidden rounded-lg border text-left hover:border-accent",
+                          selectedId === a.id || selected.includes(a.id) ? "border-accent ring-2 ring-accent" : "border-line",
+                        )}
                       >
+                        {multi && (
+                          <span
+                            aria-hidden
+                            className={cn(
+                              "absolute left-1.5 top-1.5 z-10 grid size-6 place-items-center rounded-full border text-[11px] font-bold",
+                              selected.includes(a.id) ? "border-accent bg-accent text-ink" : "border-white/60 bg-black/50 text-transparent",
+                            )}
+                          >
+                            {selected.includes(a.id) ? selected.indexOf(a.id) + 1 : ""}
+                          </span>
+                        )}
                         <span className="relative block aspect-square bg-bg-2">
                           {/* eslint-disable-next-line @next/next/no-img-element -- thumbnail */}
                           {(a.type === "IMAGE" || a.posterUrl) && <img src={a.type === "IMAGE" ? a.url : a.posterUrl!} alt="" className="h-full w-full object-cover" loading="lazy" />}
@@ -121,6 +153,23 @@ export function MediaPickerButton({
                 </ul>
               )}
             </div>
+            {multi && (
+              <div className="flex items-center justify-between gap-3 border-t border-line p-4">
+                <p className="text-sm text-fg-2">{selected.length ? `${selected.length} selected — added in this order` : "Tick the files to add, or upload new ones above."}</p>
+                <Btn
+                  type="button"
+                  variant="primary"
+                  disabled={!selected.length}
+                  onClick={() => {
+                    const byId = new Map(items.map((a) => [a.id, a]));
+                    onPickMany?.(selected.map((id) => byId.get(id)).filter(Boolean).map((a) => toPicked(a!)));
+                    setOpen(false);
+                  }}
+                >
+                  Add {selected.length || ""} {selected.length === 1 ? "file" : "files"}
+                </Btn>
+              </div>
+            )}
           </div>
         )}
       </dialog>

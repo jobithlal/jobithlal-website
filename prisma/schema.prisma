@@ -286,6 +286,8 @@ model Project {
   videoId           String?
   video             MediaAsset?      @relation("ProjectVideo", fields: [videoId], references: [id], onDelete: Restrict)
   externalVideoUrl  String?
+  /// Shape of the project's video grid: auto (from the first video), portrait 9:16, square or landscape 16:9.
+  videoShape        String           @default("auto")
   focal             String           @default("50% 50%")
   tags              Json             @default("[]")
   featured          Boolean          @default(false)

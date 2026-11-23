@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { categoryLabelOf } from "@/content/projects";
 import { artFor } from "@/content/service-map";
+import { ProjectVideos } from "./ProjectVideos";
 import type { HomeContent, Project } from "@/content/schema";
 import { breadcrumbJsonLd, JsonLd } from "@/lib/seo";
 import { PageHero } from "@/components/ui/PageHero";
@@ -117,6 +118,18 @@ export function ProjectDetail({ project, next, finalCta }: { project: Project; n
             ))}
           </div>
         </div>
+
+        {project.videos.length > 0 && (
+          <div className="container-x mt-16">
+            <div className="mb-6 flex items-baseline justify-between gap-4">
+              <Eyebrow>Videos</Eyebrow>
+              <span className="text-sm text-muted">
+                {project.videos.length} {project.videos.length === 1 ? "video" : "videos"}
+              </span>
+            </div>
+            <ProjectVideos videos={project.videos} shape={project.videoShape} title={project.title} />
+          </div>
+        )}
 
         {project.gallery.length > 0 && (
           <ul className="container-x mt-16 grid gap-5 sm:grid-cols-2">

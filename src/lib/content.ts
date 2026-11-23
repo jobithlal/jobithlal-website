@@ -215,6 +215,14 @@ export const projectInclude = {
 type ProjectRow = Prisma.ProjectGetPayload<{ include: typeof projectInclude }>;
 
 /** Database row → validated public Project shape (also used by the admin preview). */
+/** "auto" picks the grid shape from the first video's dimensions. */
+function resolveVideoShape(shape: string, first?: { width: number | null; height: number | null }): "portrait" | "square" | "landscape" {
+  if (shape === "portrait" || shape === "square" || shape === "landscape") return shape;
+  if (!first?.width || !first.height) return "portrait";
+  const r = first.width / first.height;
+  return r < 0.85 ? "portrait" : r > 1.2 ? "landscape" : "square";
+}
+
 export function toProject(p: ProjectRow): Project {
   return projectSchema.parse({
     slug: p.slug,
@@ -233,9 +241,12 @@ export function toProject(p: ProjectRow): Project {
     outcomeVerified: p.outcomeVerified,
     cover: media({ image: p.cover, mobileImage: p.mobileCover, video: p.video, focal: p.focal, alt: p.title }),
     externalVideoUrl: p.externalVideoUrl ?? undefined,
-    gallery: p.gallery.map((g) =>
-      g.asset.type === "VIDEO" ? media({ video: g.asset, alt: g.caption ?? "" }) : media({ image: g.asset, alt: g.caption ?? g.asset.alt }),
-    ),
+    // Images form the photo gallery; videos get their own three-per-row grid.
+    gallery: p.gallery.filter((g) => g.asset.type === "IMAGE").map((g) => media({ image: g.asset, alt: g.caption ?? g.asset.alt })),
+    videos: p.gallery
+      .filter((g) => g.asset.type === "VIDEO")
+      .map((g) => ({ media: media({ video: g.asset, alt: g.caption || g.asset.alt || p.title }), caption: g.caption ?? undefined })),
+    videoShape: resolveVideoShape(p.videoShape, p.gallery.find((g) => g.asset.type === "VIDEO")?.asset),
     featured: p.featured,
     order: p.order,
     status: p.status === "PUBLISHED" ? "published" : "draft",

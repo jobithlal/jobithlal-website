@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { ArrowDown, ArrowUp, Plus, Star, X } from "lucide-react";
+import { ArrowDown, ArrowUp, Film, Plus, Star, X } from "lucide-react";
 import { deleteProject, moveProject, saveProject, toggleFeatured } from "@/app/admin/actions/portfolio";
 import { Btn, Card, ConfirmButton, Input, Select, Textarea, Toggle, useActionForm, useToast } from "@/components/admin/kit";
 import { MediaField, MediaPickerButton, type PickedMedia } from "@/components/admin/MediaPicker";
@@ -61,6 +61,8 @@ export type ProjectFormValues = {
   seoDescription: string;
   ogImage: PickedMedia;
   gallery: NonNullable<PickedMedia>[];
+  videos: { media: NonNullable<PickedMedia>; caption: string }[];
+  videoShape: string;
   status: "DRAFT" | "PUBLISHED";
   isDemo: boolean;
   publicSlug: string | null;
@@ -80,6 +82,13 @@ export function ProjectForm({
   const router = useRouter();
   const toast = useToast();
   const [gallery, setGallery] = useState(v.gallery);
+  const [videos, setVideos] = useState(v.videos);
+  const moveVideo = (i: number, d: -1 | 1) =>
+    setVideos((a) => {
+      const b = [...a];
+      [b[i], b[i + d]] = [b[i + d], b[i]];
+      return b;
+    });
   const { formProps, pending, errors } = useActionForm(saveProject.bind(null, v.id), {
     trackDirty: true,
     onSuccess: (r) => {
@@ -133,7 +142,7 @@ export function ProjectForm({
             <Input label="Focal point" name="focal" defaultValue={v.focal} errors={e.focal} hint="Which part of the cover stays visible when cropped, e.g. 50% 30%." />
           </div>
           <div className="mt-6">
-            <p className="mb-2 text-sm font-medium text-fg-2">Gallery</p>
+            <p className="mb-2 text-sm font-medium text-fg-2">Image gallery</p>
             {gallery.map((g, i) => (
               <input key={`${g.id}-${i}`} type="hidden" name="gallery" value={g.id} />
             ))}
@@ -154,10 +163,11 @@ export function ProjectForm({
               ))}
               <li className="aspect-square">
                 <MediaPickerButton
-                  title="Add to gallery"
-                  ariaLabel="Add image or video to gallery"
+                  title="Add images to the gallery"
+                  ariaLabel="Add images to gallery"
+                  accept="IMAGE"
                   disabled={!storageReady}
-                  onPick={(m) => setGallery((a) => (a.some((x) => x.id === m.id) ? a : [...a, m]))}
+                  onPickMany={(ms) => setGallery((a) => [...a, ...ms.filter((m) => !a.some((x) => x.id === m.id))])}
                   className="flex h-full w-full flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-line text-xs text-muted hover:border-accent hover:text-accent disabled:opacity-50"
                 >
                   <Plus className="size-5" aria-hidden /> Add
@@ -165,6 +175,75 @@ export function ProjectForm({
               </li>
             </ul>
           </div>
+        </Card>
+        <Card
+          title="Videos"
+          description="Add as many videos as you like for this client. They're shown three per row on the project page, each with a play button."
+        >
+          {videos.map((x) => (
+            <span key={`${x.media.id}-h`}>
+              <input type="hidden" name="videoItem" value={x.media.id} />
+              <input type="hidden" name="videoCaption" value={x.caption} />
+            </span>
+          ))}
+          {videos.length > 0 && (
+            <ul className="mb-4 space-y-2">
+              {videos.map((x, i) => (
+                <li key={x.media.id} className="flex items-center gap-3 rounded-lg border border-line bg-bg-2 p-2">
+                  <span className="w-6 shrink-0 text-center text-xs text-muted">{i + 1}</span>
+                  <div className="relative size-14 shrink-0 overflow-hidden rounded-md bg-black">
+                    {/* eslint-disable-next-line @next/next/no-img-element -- admin thumbnail */}
+                    {x.media.posterUrl ? <img src={x.media.posterUrl} alt="" className="h-full w-full object-cover" /> : <Film className="absolute inset-0 m-auto size-5 text-muted" />}
+                  </div>
+                  <input
+                    value={x.caption}
+                    onChange={(ev) => setVideos((a) => a.map((y, j) => (j === i ? { ...y, caption: ev.target.value } : y)))}
+                    maxLength={200}
+                    placeholder={x.media.alt || x.media.url.split("/").pop() || "Caption (optional)"}
+                    aria-label={`Caption for video ${i + 1}`}
+                    className="h-9 min-w-0 flex-1 rounded-lg border border-line bg-bg px-3 text-sm"
+                  />
+                  <div className="flex shrink-0 gap-1">
+                    <Btn type="button" variant="ghost" className="h-8 px-2" aria-label="Move up" disabled={i === 0} onClick={() => moveVideo(i, -1)}>
+                      <ArrowUp className="size-4" />
+                    </Btn>
+                    <Btn type="button" variant="ghost" className="h-8 px-2" aria-label="Move down" disabled={i === videos.length - 1} onClick={() => moveVideo(i, 1)}>
+                      <ArrowDown className="size-4" />
+                    </Btn>
+                    <Btn type="button" variant="ghost" className="h-8 px-2" aria-label={`Remove video ${i + 1}`} onClick={() => setVideos((a) => a.filter((_, j) => j !== i))}>
+                      <X className="size-4" />
+                    </Btn>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+          <div className="flex flex-wrap items-end gap-4">
+            <MediaPickerButton
+              title="Add videos"
+              ariaLabel="Add videos to this project"
+              accept="VIDEO"
+              disabled={!storageReady}
+              onPickMany={(ms) => setVideos((a) => [...a, ...ms.filter((m) => !a.some((x) => x.media.id === m.id)).map((m) => ({ media: m, caption: "" }))])}
+              className="inline-flex h-11 items-center gap-2 rounded-full border-2 border-dashed border-line px-5 text-sm font-semibold text-fg-2 hover:border-accent hover:text-accent disabled:opacity-50"
+            >
+              <Plus className="size-4" aria-hidden /> Add videos
+            </MediaPickerButton>
+            <div className="w-56">
+              <Select
+                label="Video shape"
+                name="videoShape"
+                defaultValue={v.videoShape}
+                options={[
+                  { value: "auto", label: "Automatic (from first video)" },
+                  { value: "portrait", label: "Vertical 9:16 (Reels)" },
+                  { value: "square", label: "Square 1:1" },
+                  { value: "landscape", label: "Landscape 16:9" },
+                ]}
+              />
+            </div>
+          </div>
+          {!storageReady && <p className="mt-2 text-xs text-muted">Connect media storage to add videos.</p>}
         </Card>
         <Card title="Search & sharing">
           <div className="grid gap-4 sm:grid-cols-2">

@@ -138,6 +138,9 @@ export const projectSchema = z.object({
   cover: mediaSchema,
   externalVideoUrl: z.string().url().optional(),
   gallery: z.array(mediaSchema).default([]),
+  /** Project videos, shown three per row with player controls. */
+  videos: z.array(z.object({ media: mediaSchema, caption: z.string().optional() })).default([]),
+  videoShape: z.enum(["portrait", "square", "landscape"]).default("portrait"),
   featured: z.boolean().default(false),
   order: z.number().int().default(0),
   status: z.enum(["draft", "published"]),

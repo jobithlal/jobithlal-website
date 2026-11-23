@@ -61,6 +61,15 @@ const projectSchema = z.object({
     .union([z.string(), z.array(z.string())])
     .optional()
     .transform((v) => (v === undefined ? [] : Array.isArray(v) ? v : [v]).filter(Boolean).slice(0, 60)),
+  videoItem: z
+    .union([z.string(), z.array(z.string())])
+    .optional()
+    .transform((v) => (v === undefined ? [] : Array.isArray(v) ? v : [v]).filter(Boolean).slice(0, 60)),
+  videoCaption: z
+    .union([z.string(), z.array(z.string())])
+    .optional()
+    .transform((v) => (v === undefined ? [] : Array.isArray(v) ? v : [v]).map((c) => c.trim().slice(0, 200))),
+  videoShape: z.enum(["auto", "portrait", "square", "landscape"]).default("auto"),
   intent: z.enum(["save", "publish", "unpublish"]).default("save"),
 });
 
@@ -76,11 +85,17 @@ export async function saveProject(projectId: string | null, fd: FormData): Promi
 
     const db = requireDb();
     // Only reference media that exists (ids come from the browser).
-    const ids = [data.coverId, data.mobileCoverId, data.videoId, data.ogImageId, ...data.gallery].filter(Boolean) as string[];
+    const ids = [data.coverId, data.mobileCoverId, data.videoId, data.ogImageId, ...data.gallery, ...data.videoItem].filter(Boolean) as string[];
     if (ids.length) {
       const found = await db.mediaAsset.count({ where: { id: { in: [...new Set(ids)] } } });
       if (found !== new Set(ids).size) return { ok: false, error: "One of the selected media files no longer exists. Choose it again." };
     }
+    if (data.videoItem.length) {
+      const nonVideo = await db.mediaAsset.count({ where: { id: { in: data.videoItem }, type: { not: "VIDEO" } } });
+      if (nonVideo) return { ok: false, error: "Only videos can be added to the Videos section." };
+    }
+    const videoIds = [...new Set(data.videoItem)];
+    const imageIds = [...new Set(data.gallery)].filter((id) => !videoIds.includes(id));
 
     const existing = projectId ? await db.project.findUniqueOrThrow({ where: { id: projectId }, select: { status: true, publishedAt: true } }) : null;
     const status = data.intent === "publish" ? "PUBLISHED" : data.intent === "unpublish" ? "DRAFT" : (existing?.status ?? "DRAFT");
@@ -103,6 +118,7 @@ export async function saveProject(projectId: string | null, fd: FormData): Promi
       mobileCoverId: data.mobileCoverId,
       videoId: data.videoId,
       externalVideoUrl: data.externalVideoUrl,
+      videoShape: data.videoShape,
       focal: data.focal,
       tags: data.tags,
       featured: data.featured,
@@ -119,9 +135,12 @@ export async function saveProject(projectId: string | null, fd: FormData): Promi
     const saved = await db.$transaction(async (tx) => {
       const p = projectId ? await tx.project.update({ where: { id: projectId }, data: fields }) : await tx.project.create({ data: fields });
       await tx.projectMedia.deleteMany({ where: { projectId: p.id } });
-      if (data.gallery.length) {
-        await tx.projectMedia.createMany({ data: data.gallery.map((assetId, order) => ({ projectId: p.id, assetId, order })) });
-      }
+      // Videos first (with captions), then the image gallery — each keeps the order set in the editor.
+      const rows = [
+        ...videoIds.map((assetId, i) => ({ assetId, caption: data.videoCaption[data.videoItem.indexOf(assetId)] || null, order: i })),
+        ...imageIds.map((assetId, i) => ({ assetId, caption: null, order: videoIds.length + i })),
+      ];
+      if (rows.length) await tx.projectMedia.createMany({ data: rows.map((r) => ({ ...r, projectId: p.id })) });
       return p;
     });
 
