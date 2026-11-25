@@ -63,6 +63,11 @@
   color: var(--text);
 }
 
+/* `split:` — the homepage split header/hero layout and the full desktop nav. */
+@theme {
+  --breakpoint-split: 80rem;
+}
+
 @theme inline {
   --color-bg: var(--bg);
   --color-bg-2: var(--bg-2);

@@ -3,15 +3,15 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
-import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "motion/react";
+import { AnimatePresence, LayoutGroup, motion, useMotionValueEvent, useScroll } from "motion/react";
 import { ChevronDown, Menu, X, ArrowUpRight } from "lucide-react";
-import { headerNav, mainNav } from "./nav";
+import { blogNavItem, headerNav, mainNav } from "./nav";
 import { Logo } from "./Logo";
 import { ThemeToggle } from "./Theme";
 import { ButtonLink } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 
-type ServiceLink = { slug: string; title: string; subtitle: string };
+export type ServiceLink = { slug: string; title: string; subtitle: string };
 
 type HeaderProps = {
   logo: { text: string; subtitle: string; imageUrl?: string };
@@ -39,14 +39,31 @@ export function HeaderShell({ logo, services, themeToggle, showBlog = false, beh
   const [open, setOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("top");
   const isHome = pathname === "/";
+  // On the homepage the hero carries its own split navigation at `split:` widths,
+  // so this header stays out of the way until the visitor scrolls past the hero.
+  const [pastHero, setPastHero] = useState(false);
   const path = pathname ?? "";
   const nav = headerNav(showBlog);
 
   useMotionValueEvent(scrollY, "change", (y) => {
     const prev = scrollY.getPrevious() ?? 0;
     setScrolled(y > 24);
+    if (isHome) {
+      const hero = document.getElementById("top");
+      setPastHero(y > (hero ? hero.offsetTop + hero.offsetHeight - 96 : 600));
+    }
     if (behavior === "auto-hide") setHidden(y > 420 && y > prev && !open);
   });
+
+  // Correct state when the page loads already scrolled (refresh mid-page, back navigation).
+  useEffect(() => {
+    if (!isHome) return;
+    const raf = requestAnimationFrame(() => {
+      const hero = document.getElementById("top");
+      setPastHero(window.scrollY > (hero ? hero.offsetTop + hero.offsetHeight - 96 : 600));
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [isHome]);
 
   // Active section tracking on the homepage.
   useEffect(() => {
@@ -88,8 +105,10 @@ export function HeaderShell({ logo, services, themeToggle, showBlog = false, beh
         initial={false}
         animate={{ y: hidden ? "-110%" : "0%" }}
         transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+        data-over-hero={isHome && !pastHero ? "" : undefined}
         className={cn(
-          "fixed inset-x-0 top-0 z-50 transition-[background-color,border-color,backdrop-filter] duration-500",
+          "fixed inset-x-0 top-0 z-50 transition-[background-color,border-color,backdrop-filter,opacity,visibility] duration-500",
+          isHome && !pastHero && "split:invisible split:opacity-0",
           scrolled || open
             ? "border-b border-line/70 bg-bg/75 backdrop-blur-xl backdrop-saturate-150"
             : "border-b border-transparent bg-gradient-to-b from-bg/80 to-transparent",
@@ -100,7 +119,7 @@ export function HeaderShell({ logo, services, themeToggle, showBlog = false, beh
           <div className="flex min-w-0 items-center gap-8">
             <Logo text={logo.text} subtitle={logo.subtitle} imageUrl={logo.imageUrl} />
 
-            <nav aria-label="Main" className="hidden xl:block">
+            <nav aria-label="Main" className="hidden split:block">
               <ul className="flex items-center gap-0.5 rounded-full border border-line bg-bg/50 p-1 backdrop-blur-md">
                 {nav.map((n) =>
                   n.label === "Services" ? (
@@ -133,7 +152,7 @@ export function HeaderShell({ logo, services, themeToggle, showBlog = false, beh
               aria-expanded={open}
               aria-controls="mobile-menu"
               aria-label={open ? "Close menu" : "Open menu"}
-              className="grid size-11 place-items-center rounded-full bg-fg/[0.06] text-fg transition-colors hover:bg-fg/[0.12] hover:text-accent-fg xl:hidden"
+              className="grid size-11 place-items-center rounded-full bg-fg/[0.06] text-fg transition-colors hover:bg-fg/[0.12] hover:text-accent-fg split:hidden"
             >
               {open ? <X className="size-5" /> : <Menu className="size-5" />}
             </button>
@@ -146,7 +165,7 @@ export function HeaderShell({ logo, services, themeToggle, showBlog = false, beh
   );
 }
 
-function ActivePill() {
+export function ActivePill() {
   return (
     <motion.span
       layoutId="nav-indicator"
@@ -157,14 +176,16 @@ function ActivePill() {
   );
 }
 
-function NavLink({
+export function NavLink({
   href,
   active,
   pill = true,
+  className,
   children,
 }: {
   href: string;
   active: boolean;
+  className?: string;
   /** Draw the filled active pill here (false when a parent draws it). */
   pill?: boolean;
   children: React.ReactNode;
@@ -176,6 +197,7 @@ function NavLink({
       className={cn(
         "relative block rounded-full px-[1.15rem] py-2.5 text-[0.84rem] font-semibold transition-colors",
         active ? "text-bg" : "text-fg-2 hover:text-fg",
+        className,
       )}
     >
       {active && pill && <ActivePill />}
@@ -184,14 +206,16 @@ function NavLink({
   );
 }
 
-function ServicesDropdown({
+export function ServicesDropdown({
   item,
   services,
   active,
+  linkClassName,
 }: {
   item: (typeof mainNav)[number];
   services: ServiceLink[];
   active: boolean;
+  linkClassName?: string;
 }) {
   const [open, setOpen] = useState(false);
   const id = useId();
@@ -239,7 +263,7 @@ function ServicesDropdown({
     >
       <div className="relative flex items-center rounded-full">
         {active && <ActivePill />}
-        <NavLink href={item.href} active={active} pill={false}>
+        <NavLink href={item.href} active={active} pill={false} className={linkClassName}>
           {item.label}
         </NavLink>
         <button
@@ -270,7 +294,7 @@ function ServicesDropdown({
             transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
             className="absolute left-1/2 top-full w-[22rem] -translate-x-1/2 pt-3"
           >
-            <ul className="overflow-hidden rounded-2xl border border-line bg-card/95 p-2 shadow-2xl backdrop-blur-xl">
+            <ul className="overflow-hidden rounded-2xl border border-line bg-card p-2 shadow-2xl">
               {services.map((s, i) => (
                 <li key={s.slug}>
                   <Link
@@ -350,7 +374,7 @@ function MobileMenu({
           animate={{ clipPath: "inset(0 0 0% 0)" }}
           exit={{ clipPath: "inset(0 0 100% 0)" }}
           transition={{ duration: 0.6, ease: [0.76, 0, 0.24, 1] }}
-          className="fixed inset-0 z-40 flex flex-col overflow-y-auto bg-bg pt-24 xl:hidden"
+          className="fixed inset-0 z-40 flex flex-col overflow-y-auto bg-bg pt-24 split:hidden"
         >
           <div className="pointer-events-none absolute -right-24 top-24 size-80 rounded-full bg-accent/10 blur-3xl" />
           <nav aria-label="Mobile" className="container-x flex-1">
@@ -418,5 +442,81 @@ function MobileMenu({
         </motion.div>
       )}
     </AnimatePresence>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
+ * Split navigation for the homepage hero (`split:` widths only).
+ * The menu is divided into two rounded pills that sit in the hero grid on
+ * either side of the hero image: page links on the left, the remaining links
+ * plus the contact call-to-action (and theme switch) on the right.
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+export type SplitNavProps = {
+  services: ServiceLink[];
+  themeToggle?: boolean;
+  showBlog?: boolean;
+};
+
+const PILL =
+  "flex h-14 items-center rounded-full border border-line bg-elevated/70 p-1 shadow-[0_18px_40px_-30px_rgba(0,0,0,0.6)] backdrop-blur-md";
+const PILL_LINK = "px-3.5 2xl:px-[1.1rem]";
+
+/** Left half: Home, Services (with dropdown), Work and — when enabled — Blog. Contact lives in the right pill's CTA. */
+export function splitNavGroups(showBlog: boolean) {
+  const items = mainNav.filter((n) => n.label !== "Contact");
+  const left = items.slice(0, 3);
+  const right = items.slice(3);
+  if (showBlog) left.push(blogNavItem);
+  return { left, right };
+}
+
+export function SplitNavLeft({ services, showBlog = false }: SplitNavProps) {
+  const { left } = splitNavGroups(showBlog);
+  return (
+    <LayoutGroup id="hero-nav">
+      <nav aria-label="Main" className="min-w-0">
+        <ul className={cn(PILL, "justify-between gap-0.5")}>
+          {left.map((n, i) =>
+            n.label === "Services" ? (
+              <ServicesDropdown key={n.label} item={n} services={services} active={false} linkClassName={PILL_LINK} />
+            ) : (
+              <li key={n.label}>
+                <NavLink href={n.href} active={i === 0} className={PILL_LINK}>
+                  {n.label}
+                </NavLink>
+              </li>
+            ),
+          )}
+        </ul>
+      </nav>
+    </LayoutGroup>
+  );
+}
+
+export function SplitNavRight({ themeToggle, showBlog = false }: SplitNavProps) {
+  const { right } = splitNavGroups(showBlog);
+  return (
+    <nav aria-label="More pages and contact" className="min-w-0">
+      <ul className={cn(PILL, "gap-0.5")}>
+        {right.map((n) => (
+          <li key={n.label}>
+            <NavLink href={n.href} active={false} className={PILL_LINK}>
+              {n.label}
+            </NavLink>
+          </li>
+        ))}
+        <li className="min-w-0 flex-1">
+          <ButtonLink href="/contact" magnetic={false} className="h-12 w-full whitespace-nowrap px-4 text-[0.7rem]">
+            Start a project
+          </ButtonLink>
+        </li>
+        {themeToggle && (
+          <li>
+            <ThemeToggle className="size-12 border-transparent bg-fg/[0.06] hover:border-transparent hover:bg-fg/[0.12]" />
+          </li>
+        )}
+      </ul>
+    </nav>
   );
 }

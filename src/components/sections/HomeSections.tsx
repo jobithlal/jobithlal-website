@@ -1,4 +1,4 @@
-import { Hero } from "./Hero";
+import { Hero, type HeroNavData } from "./Hero";
 import { Ticker } from "./Ticker";
 import { Services } from "./Services";
 import { Difference } from "./Difference";
@@ -17,14 +17,16 @@ export type HomeData = {
   projects: Project[];
   visible: Record<string, boolean>;
   order?: string[];
+  /** Split navigation shown inside the hero at wide widths. */
+  nav?: HeroNavData;
 };
 
 const DEFAULT_ORDER = ["hero", "ticker", "services", "difference", "work", "process", "finalCta", "contact"];
 
 /** The homepage, in the admin-defined order — shared by the live page and the draft preview. */
-export function HomeSections({ site, hero, ticker, home, services, projects, visible, order = DEFAULT_ORDER }: HomeData) {
+export function HomeSections({ site, hero, ticker, home, services, projects, visible, order = DEFAULT_ORDER, nav }: HomeData) {
   const render: Record<string, React.ReactNode> = {
-    hero: <Hero hero={hero} experienceYears={site.experienceYears} services={services} socials={site.socials} />,
+    hero: <Hero hero={hero} experienceYears={site.experienceYears} services={services} socials={site.socials} nav={nav} />,
     ticker: <Ticker ticker={ticker} />,
     services: <Services content={home.services} services={services} />,
     difference: <Difference content={home.difference} />,
