@@ -142,7 +142,7 @@ export function Artwork({ variant, className }: { variant: ArtVariant; className
           REC
         </div>
         <div className="absolute right-9 top-8 font-mono text-[10px] tracking-[0.2em] text-fg/50">4K · 25P</div>
-        <div className="absolute bottom-8 left-9 font-mono text-[10px] tracking-[0.2em] text-accent-fg/90">00:00:16:00</div>
+        <div className="absolute bottom-[1.85rem] right-[6.75rem] font-mono text-[10px] tracking-[0.2em] text-accent-fg/90">00:00:16:00</div>
         <div className="absolute bottom-9 right-9 h-1 w-16 overflow-hidden rounded bg-fg/15">
           <span className="block h-full w-1/2 bg-accent" style={{ animation: "scan 3.5s linear infinite" }} />
         </div>

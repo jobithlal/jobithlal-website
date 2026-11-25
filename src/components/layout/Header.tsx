@@ -96,38 +96,44 @@ export function HeaderShell({ logo, services, themeToggle, showBlog = false, beh
         )}
       >
         <div className="container-x flex h-20 items-center justify-between gap-6 lg:h-24">
-          <Logo text={logo.text} subtitle={logo.subtitle} imageUrl={logo.imageUrl} />
+          {/* Left: logo + navigation in an outlined pill (active page = filled pill) */}
+          <div className="flex min-w-0 items-center gap-8">
+            <Logo text={logo.text} subtitle={logo.subtitle} imageUrl={logo.imageUrl} />
 
-          <nav aria-label="Main" className="hidden xl:block">
-            <ul className="flex items-center gap-1">
-              {nav.map((n) =>
-                n.label === "Services" ? (
-                  <ServicesDropdown key={n.label} item={n} services={services} active={isActive(n)} />
-                ) : (
-                  <li key={n.label}>
-                    <NavLink href={n.href} active={isActive(n)}>
-                      {n.label}
-                    </NavLink>
-                  </li>
-                ),
-              )}
-            </ul>
-          </nav>
+            <nav aria-label="Main" className="hidden xl:block">
+              <ul className="flex items-center gap-0.5 rounded-full border border-line bg-bg/50 p-1 backdrop-blur-md">
+                {nav.map((n) =>
+                  n.label === "Services" ? (
+                    <ServicesDropdown key={n.label} item={n} services={services} active={isActive(n)} />
+                  ) : (
+                    <li key={n.label}>
+                      <NavLink href={n.href} active={isActive(n)}>
+                        {n.label}
+                      </NavLink>
+                    </li>
+                  ),
+                )}
+              </ul>
+            </nav>
+          </div>
 
-          <div className="flex items-center gap-3">
-            {themeToggle && <ThemeToggle />}
+          {/* Right: matching pill with the main action and round icon buttons */}
+          <div className="flex items-center gap-1 rounded-full border border-line bg-bg/50 p-1 backdrop-blur-md">
             <div className="hidden sm:block">
-              <ButtonLink href="/contact" className="h-12 px-6">
+              <ButtonLink href="/contact" className="h-11 px-7">
                 Start a project
               </ButtonLink>
             </div>
+            {themeToggle && (
+              <ThemeToggle className="size-11 border-transparent bg-fg/[0.06] hover:border-transparent hover:bg-fg/[0.12]" />
+            )}
             <button
               type="button"
               onClick={() => setOpen((o) => !o)}
               aria-expanded={open}
               aria-controls="mobile-menu"
               aria-label={open ? "Close menu" : "Open menu"}
-              className="grid size-12 place-items-center rounded-full border border-line bg-white/[0.03] text-fg transition-colors hover:border-accent hover:text-accent-fg xl:hidden"
+              className="grid size-11 place-items-center rounded-full bg-fg/[0.06] text-fg transition-colors hover:bg-fg/[0.12] hover:text-accent-fg xl:hidden"
             >
               {open ? <X className="size-5" /> : <Menu className="size-5" />}
             </button>
@@ -140,24 +146,40 @@ export function HeaderShell({ logo, services, themeToggle, showBlog = false, beh
   );
 }
 
-function NavLink({ href, active, children }: { href: string; active: boolean; children: React.ReactNode }) {
+function ActivePill() {
+  return (
+    <motion.span
+      layoutId="nav-indicator"
+      aria-hidden
+      className="absolute inset-0 rounded-full bg-fg"
+      transition={{ type: "spring", stiffness: 420, damping: 34 }}
+    />
+  );
+}
+
+function NavLink({
+  href,
+  active,
+  pill = true,
+  children,
+}: {
+  href: string;
+  active: boolean;
+  /** Draw the filled active pill here (false when a parent draws it). */
+  pill?: boolean;
+  children: React.ReactNode;
+}) {
   return (
     <Link
       href={href}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "relative block px-4 py-2.5 text-[0.82rem] font-medium uppercase tracking-[0.14em] transition-colors",
-        active ? "text-fg" : "text-fg-2 hover:text-fg",
+        "relative block rounded-full px-[1.15rem] py-2.5 text-[0.84rem] font-semibold transition-colors",
+        active ? "text-bg" : "text-fg-2 hover:text-fg",
       )}
     >
-      {children}
-      {active && (
-        <motion.span
-          layoutId="nav-indicator"
-          className="absolute inset-x-4 -bottom-0.5 h-0.5 rounded-full bg-accent"
-          transition={{ type: "spring", stiffness: 420, damping: 34 }}
-        />
-      )}
+      {active && pill && <ActivePill />}
+      <span className="relative">{children}</span>
     </Link>
   );
 }
@@ -215,8 +237,9 @@ function ServicesDropdown({
         if (!ref.current?.contains(e.relatedTarget as Node)) setOpen(false);
       }}
     >
-      <div className="flex items-center">
-        <NavLink href={item.href} active={active}>
+      <div className="relative flex items-center rounded-full">
+        {active && <ActivePill />}
+        <NavLink href={item.href} active={active} pill={false}>
           {item.label}
         </NavLink>
         <button
@@ -229,7 +252,10 @@ function ServicesDropdown({
             if (Date.now() - hoverOpenedAt.current < 400) return setOpen(true);
             setOpen((o) => !o);
           }}
-          className="-ml-3 grid size-7 place-items-center rounded-full text-fg-2 hover:text-accent-fg"
+          className={cn(
+            "relative -ml-2.5 mr-1.5 grid size-7 place-items-center rounded-full transition-colors",
+            active ? "text-bg/70 hover:text-bg" : "text-fg-2 hover:text-accent-fg",
+          )}
         >
           <ChevronDown className={cn("size-3.5 transition-transform duration-300", open && "rotate-180")} />
         </button>
@@ -328,34 +354,48 @@ function MobileMenu({
         >
           <div className="pointer-events-none absolute -right-24 top-24 size-80 rounded-full bg-accent/10 blur-3xl" />
           <nav aria-label="Mobile" className="container-x flex-1">
-            <ul className="border-t border-line">
+            <ul className="space-y-2.5">
               {nav.map((n, i) => (
                 <motion.li
                   key={n.label}
                   initial={{ opacity: 0, y: 24 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.18 + i * 0.05, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                  className="border-b border-line"
                 >
                   <Link
                     href={n.href}
                     onClick={onClose}
-                    className="flex items-center justify-between py-4 font-display text-[2rem] font-bold uppercase leading-none tracking-tight"
+                    aria-current={isActive(n) ? "page" : undefined}
+                    className={cn(
+                      "group flex items-center justify-between rounded-full border py-2 pl-6 pr-2 transition-colors",
+                      isActive(n)
+                        ? "border-fg bg-fg text-bg"
+                        : "border-line text-fg hover:border-fg/40",
+                    )}
                   >
-                    <span className={cn(isActive(n) ? "text-accent-fg" : "text-fg")}>{n.label}</span>
-                    <span className="text-xs font-medium tracking-[0.2em] text-muted">0{i + 1}</span>
+                    <span className="font-display text-[1.65rem] font-bold uppercase leading-none tracking-tight">
+                      {n.label}
+                    </span>
+                    <span
+                      className={cn(
+                        "grid size-11 place-items-center rounded-full transition-transform group-hover:rotate-45",
+                        isActive(n) ? "bg-bg text-fg" : "bg-accent text-black",
+                      )}
+                    >
+                      <ArrowUpRight className="size-4" aria-hidden />
+                    </span>
                   </Link>
                   {n.label === "Services" && (
-                    <ul className="-mt-1 mb-4 space-y-2 pl-1">
+                    <ul className="flex flex-wrap gap-2 px-1 pb-1 pt-3">
                       {services.map((s) => (
                         <li key={s.slug}>
                           <Link
                             href={`/services/${s.slug}`}
                             onClick={onClose}
-                            className="flex items-center gap-2 text-sm text-fg-2 hover:text-accent-fg"
+                            className="flex items-center gap-1.5 rounded-full border border-line px-3.5 py-2 text-sm text-fg-2 transition-colors hover:border-accent hover:text-accent-fg"
                           >
-                            <ArrowUpRight className="size-3.5 text-accent-fg" />
                             {s.title}
+                            <ArrowUpRight className="size-3.5 text-accent-fg" aria-hidden />
                           </Link>
                         </li>
                       ))}
@@ -371,7 +411,7 @@ function MobileMenu({
             transition={{ delay: 0.5 }}
             className="container-x pb-10 pt-8"
           >
-            <ButtonLink href="/contact" magnetic={false} className="w-full" onClick={onClose}>
+            <ButtonLink href="/contact" magnetic={false} className="h-14 w-full" onClick={onClose}>
               Start a project
             </ButtonLink>
           </motion.div>

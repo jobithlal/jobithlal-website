@@ -24,7 +24,7 @@ const DEFAULT_ORDER = ["hero", "ticker", "services", "difference", "work", "proc
 /** The homepage, in the admin-defined order — shared by the live page and the draft preview. */
 export function HomeSections({ site, hero, ticker, home, services, projects, visible, order = DEFAULT_ORDER }: HomeData) {
   const render: Record<string, React.ReactNode> = {
-    hero: <Hero hero={hero} experienceYears={site.experienceYears} />,
+    hero: <Hero hero={hero} experienceYears={site.experienceYears} services={services} socials={site.socials} />,
     ticker: <Ticker ticker={ticker} />,
     services: <Services content={home.services} services={services} />,
     difference: <Difference content={home.difference} />,
