@@ -9,7 +9,7 @@ import { PrismaClient, type Prisma } from "../src/generated/prisma/client";
 import { siteSettings, hero, ticker, home } from "../src/content/site";
 import { services } from "../src/content/services";
 import { projects, categoryLabels } from "../src/content/projects";
-import { readFileSync, readdirSync } from "node:fs";
+import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { readingMinutes } from "../src/lib/markdown-types";
 
@@ -148,6 +148,7 @@ async function main() {
   for (const t of templates) await db.emailTemplate.upsert({ where: { key: t.key }, create: t, update: {} });
 
   await seedBlog();
+  await seedServiceThumbnails();
   console.log("Seed complete.");
 }
 
@@ -216,6 +217,44 @@ async function seedBlog() {
     update: { data: json({ ...data, seeded: true }) },
   });
   console.log("Blog sample articles added.");
+}
+
+/**
+ * Service thumbnails shipped in public/services/<slug>.webp. Each file becomes a
+ * media library item once (keyed by storageKey) and is set as that service's image
+ * the first time only, so later changes made in the admin are never overwritten.
+ */
+async function seedServiceThumbnails() {
+  const dir = join(process.cwd(), "public", "services");
+  let files: string[] = [];
+  try {
+    files = readdirSync(dir).filter((f) => f.endsWith(".webp"));
+  } catch {
+    return;
+  }
+  for (const f of files) {
+    const slug = f.replace(/\.webp$/, "");
+    const storageKey = `static/services/${f}`;
+    if (await db.mediaAsset.findUnique({ where: { storageKey } })) continue;
+    const service = await db.service.findUnique({ where: { slug } });
+    if (!service) continue;
+    const asset = await db.mediaAsset.create({
+      data: {
+        type: "IMAGE",
+        storageKey,
+        url: `/services/${f}`,
+        filename: f,
+        label: `${service.title} thumbnail`,
+        alt: `${service.title} — minimal mockup illustration`,
+        mimeType: "image/webp",
+        size: statSync(join(dir, f)).size,
+        width: 1536,
+        height: 1024,
+      },
+    });
+    await db.service.update({ where: { id: service.id }, data: { imageId: asset.id } });
+    console.log(`Service thumbnail set: ${slug}`);
+  }
 }
 
 main()
